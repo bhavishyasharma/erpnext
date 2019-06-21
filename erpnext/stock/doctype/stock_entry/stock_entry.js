@@ -768,13 +768,9 @@ erpnext.stock.StockEntry = erpnext.stock.StockController.extend({
 		this.frm.cscript.toggle_enable_bom();
 
 		if (doc.purpose == 'Subcontract') {
-			doc.customer = doc.customer_name = doc.customer_address =
-				doc.delivery_note_no = doc.sales_invoice_no = null;
+			doc.delivery_note_no = doc.sales_invoice_no = null;
 		} else {
-			doc.customer = doc.customer_name = doc.customer_address =
-				doc.delivery_note_no = doc.sales_invoice_no = doc.supplier =
-				doc.supplier_name = doc.supplier_address = doc.purchase_receipt_no =
-				doc.address_display = null;
+			doc.delivery_note_no = doc.sales_invoice_no = doc.purchase_receipt_no = null;
 		}
 		if(doc.purpose == "Material Receipt") {
 			this.frm.set_value("from_bom", 0);
