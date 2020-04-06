@@ -1320,3 +1320,117 @@ def validate_sample_quantity(item_code, sample_quantity, qty, batch_no = None):
 			format(max_retain_qty, batch_no, item_code), alert=True)
 		sample_quantity = qty_diff
 	return sample_quantity
+
+def customer_stock_entry_query(doctype, txt, searchfield, start, page_len, filters):
+	from frappe.desk.reportview import get_match_cond
+	customer = filters.pop('customer')
+	purpose = filters.pop('purpose')
+	condition = ""
+	for fieldname, value in iteritems(filters):
+		condition += " and {field}={value}".format(
+			field=fieldname,
+			value=value
+		)
+	return frappe.db.sql("""select
+			`tabStock Entry`.name, `tabStock Entry`.customer, `tabStock Entry`.posting_date
+		from
+			`tabStock Entry`
+		where
+			`tabStock Entry`.customer = %(customer)s and 
+			`tabStock Entry`.purpose = %(purpose)s and
+			`tabStock Entry`.docstatus = 1 and
+ 			`tabStock Entry`.`{key}` like %(txt)s
+			{mcond}
+		order by 
+			if(locate(%(_txt)s, `tabStock Entry`.name), locate(%(_txt)s, `tabStock Entry`.name), 99999),
+			`tabStock Entry`.idx desc, `tabStock Entry`.name
+		limit %(start)s, %(page_len)s """.format(
+		mcond=get_match_cond(doctype),
+		key=frappe.db.escape(searchfield)),
+		{
+			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len,
+			'customer': customer,
+			'purpose': purpose
+		}
+	)
+
+
+def supplier_stock_entry_query(doctype, txt, searchfield, start, page_len, filters):
+	from frappe.desk.reportview import get_match_cond
+	supplier = filters.pop('supplier')
+	naming_series = filters.pop('naming_series')
+	condition = ""
+	for fieldname, value in iteritems(filters):
+		condition += " and {field}={value}".format(
+			field=fieldname,
+			value=value
+		)
+	return frappe.db.sql("""select
+			`tabStock Entry`.name, `tabStock Entry`.customer, `tabStock Entry`.posting_date
+		from
+			`tabStock Entry`
+		where
+			`tabStock Entry`.naming_series like %(naming_series)s and
+			`tabStock Entry`.supplier = %(supplier)s and 
+			`tabStock Entry`.docstatus = 1 and
+ 			`tabStock Entry`.`{key}` like %(txt)s
+			{mcond}
+		order by 
+			if(locate(%(_txt)s, `tabStock Entry`.name), locate(%(_txt)s, `tabStock Entry`.name), 99999),
+			`tabStock Entry`.idx desc, `tabStock Entry`.name
+		limit %(start)s, %(page_len)s """.format(
+		mcond=get_match_cond(doctype),
+		key=frappe.db.escape(searchfield)),
+		{
+			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len,
+			'supplier': supplier,
+			'naming_series': "%%%s%%" % frappe.db.escape(naming_series)
+		}
+	)
+
+def stock_entry_item_query(doctype, txt, searchfield, start, page_len, filters):
+	from frappe.desk.reportview import get_match_cond
+	stock_entry = filters.pop('stock_entry')
+        item_code = filters.pop('item_code')
+	condition = ""
+	for fieldname, value in iteritems(filters):
+		condition += " and {field}={value}".format(
+			field=fieldname,
+			value=value
+		)
+	return frappe.db.sql("""select
+			a.name, a.item_code, a.qty, a.selling_rate, a.selling_amount
+		from
+			`tabStock Entry Detail` a
+		left join
+			`tabStock Entry Detail` b
+		on
+			a.name = b.return_stock_entry_item
+		where
+			a.parent = %(stock_entry)s and
+			a.`{key}` like %(txt)s and
+                        a.item_code = %(item_code)s and
+			b.return_stock_entry_item is null
+			{mcond}
+		order by
+			if(locate(%(_txt)s, a.name), locate(%(_txt)s, a.name), 99999),
+			a.idx desc, a.name
+		limit %(start)s, %(page_len)s """.format(
+		mcond=get_match_cond(doctype),
+		key=frappe.db.escape(searchfield)),
+		{
+			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len,
+			'stock_entry': stock_entry,
+                        'item_code': item_code
+		}
+	)
+

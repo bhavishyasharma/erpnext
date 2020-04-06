@@ -295,7 +295,19 @@ def get_data():
 					"is_query_report": True,
 					"name": "Item Variant Details",
 					"doctype": "Item"
-				}
+				},
+				{
+                                        "type": "report",
+                                        "is_query_report": True,
+                                        "name": "Customer Material Reconciliation",
+                                        "doctype": "Stock Entry"
+                                },
+				{
+                                        "type": "report",
+                                        "is_query_report": True,
+                                        "name": "Repair Challan Reconciliation",
+                                        "doctype": "Stock Entry"
+                                }
 			]
 		},
 		{
