@@ -1400,7 +1400,7 @@ def supplier_stock_entry_query(doctype, txt, searchfield, start, page_len, filte
 def stock_entry_item_query(doctype, txt, searchfield, start, page_len, filters):
 	from frappe.desk.reportview import get_match_cond
 	stock_entry = filters.pop('stock_entry')
-        item_code = filters.pop('item_code')
+	item_code = filters.pop('item_code')
 	condition = ""
 	for fieldname, value in iteritems(filters):
 		condition += " and {field}={value}".format(
