@@ -177,7 +177,8 @@ class StockEntry(StockController):
 						item.set(f, item_details.get(f))
 
 			if not item.transfer_qty and item.qty:
-				item.transfer_qty = item.qty * item.conversion_factor
+				item.transfer_qty = ( flt(item.qty, item.precision("qty"))
+					* flt(item.conversion_factor, item.precision("conversion_factor")) )
 
 			if (self.purpose in ("Material Transfer", "Material Transfer for Manufacture")
 				and not item.serial_no
@@ -226,7 +227,9 @@ class StockEntry(StockController):
 
 		for d in self.get("items"):
 			if not d.expense_account:
-				frappe.throw(_("Please enter Difference Account"))
+				frappe.throw(_("Please enter <b>Difference Account</b> or set default <b>Stock Adjustment Account</b> for company {0}")
+					.format(frappe.bold(self.company)))
+
 			elif self.is_opening == "Yes" and frappe.db.get_value("Account", d.expense_account, "report_type") == "Profit and Loss":
 				frappe.throw(_("Difference Account must be a Asset/Liability type account, since this Stock Entry is an Opening Entry"), OpeningEntryAccountError)
 
@@ -345,7 +348,7 @@ class StockEntry(StockController):
 			elif d.t_warehouse and not d.basic_rate:
 				d.basic_rate = get_valuation_rate(d.item_code, d.t_warehouse,
 					self.doctype, d.name, d.allow_zero_valuation_rate,
-					currency=erpnext.get_company_currency(self.company))
+					currency=erpnext.get_company_currency(self.company), company=self.company)
 
 	def set_actual_qty(self):
 		allow_negative_stock = cint(frappe.db.get_value("Stock Settings", None, "allow_negative_stock"))
@@ -752,13 +755,13 @@ class StockEntry(StockController):
 
 					self.add_to_stock_entry_detail(item_dict)
 
-					if self.purpose != "Subcontract":
-						scrap_item_dict = self.get_bom_scrap_material(self.fg_completed_qty)
-						for item in itervalues(scrap_item_dict):
-							if self.pro_doc and self.pro_doc.scrap_warehouse:
-								item["to_warehouse"] = self.pro_doc.scrap_warehouse
+				if self.purpose != "Subcontract" and self.purpose == "Manufacture":
+					scrap_item_dict = self.get_bom_scrap_material(self.fg_completed_qty)
+					for item in itervalues(scrap_item_dict):
+						if self.pro_doc and self.pro_doc.scrap_warehouse:
+							item["to_warehouse"] = self.pro_doc.scrap_warehouse
 
-						self.add_to_stock_entry_detail(scrap_item_dict, bom_no=self.bom_no)
+					self.add_to_stock_entry_detail(scrap_item_dict, bom_no=self.bom_no)
 
 			# fetch the serial_no of the first stock entry for the second stock entry
 			if self.work_order and self.purpose == "Manufacture":

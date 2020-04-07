@@ -27,6 +27,12 @@ frappe.ui.form.on("Purchase Receipt", {
 			}
 		});
 
+		frm.set_query("taxes_and_charges", function() {
+			return {
+				filters: {'company': frm.doc.company }
+			}
+		});
+
 	},
 	onload: function(frm) {
 		erpnext.queries.setup_queries(frm, "Warehouse", function() {
@@ -105,10 +111,10 @@ erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend
 					cur_frm.add_custom_button(__("Close"), this.close_purchase_receipt, __("Status"))
 				}
 
-				cur_frm.add_custom_button(__('Return'), this.make_purchase_return, __("Make"));
+				cur_frm.add_custom_button(__('Purchase Return'), this.make_purchase_return, __("Make"));
 
 				if(flt(this.frm.doc.per_billed) < 100) {
-					cur_frm.add_custom_button(__('Invoice'), this.make_purchase_invoice, __("Make"));
+					cur_frm.add_custom_button(__('Purchase Invoice'), this.make_purchase_invoice, __("Make"));
 				}
 				cur_frm.add_custom_button(__('Retention Stock Entry'), this.make_retention_stock_entry, __("Make"));
 

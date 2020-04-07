@@ -10,7 +10,8 @@ frappe.ui.form.on("Sales Order", {
 			'Sales Invoice': 'Invoice',
 			'Material Request': 'Material Request',
 			'Purchase Order': 'Purchase Order',
-			'Project': 'Project'
+			'Project': 'Project',
+			'Payment Entry': "Payment"
 		}
 		frm.add_fetch('customer', 'tax_id', 'tax_id');
 
@@ -141,7 +142,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 
 				// delivery note
 				if(flt(doc.per_delivered, 6) < 100 && allow_delivery) {
-					this.frm.add_custom_button(__('Delivery'),
+					this.frm.add_custom_button(__('Delivery Note'),
 						function() { me.make_delivery_note_based_on_delivery_date(); }, __("Make"));
 
 					if(["Sales", "Shopping Cart"].indexOf(doc.order_type)!==-1){
@@ -262,27 +263,44 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 					});
 					return;
 				} else {
-					var fields = [
-						{fieldtype:'Table', fieldname: 'items',
-							description: __('Select BOM and Qty for Production'),
-							fields: [
-								{fieldtype:'Read Only', fieldname:'item_code',
-									label: __('Item Code'), in_list_view:1},
-								{fieldtype:'Link', fieldname:'bom', options: 'BOM', reqd: 1,
-									label: __('Select BOM'), in_list_view:1, get_query: function(doc) {
-										return {filters: {item: doc.item_code}};
-									}},
-								{fieldtype:'Float', fieldname:'pending_qty', reqd: 1,
-									label: __('Qty'), in_list_view:1},
-								{fieldtype:'Data', fieldname:'sales_order_item', reqd: 1,
-									label: __('Sales Order Item'), hidden:1}
-							],
-							data: r.message,
-							get_data: function() {
-								return r.message
+					const fields = [{
+						label: 'Items',
+						fieldtype: 'Table',
+						fieldname: 'items',
+						description: __('Select BOM and Qty for Production'),
+						fields: [{
+							fieldtype: 'Read Only',
+							fieldname: 'item_code',
+							label: __('Item Code'),
+							in_list_view: 1
+						}, {
+							fieldtype: 'Link',
+							fieldname: 'bom',
+							options: 'BOM',
+							reqd: 1,
+							label: __('Select BOM'),
+							in_list_view: 1,
+							get_query: function (doc) {
+								return { filters: { item: doc.item_code } };
 							}
+						}, {
+							fieldtype: 'Float',
+							fieldname: 'pending_qty',
+							reqd: 1,
+							label: __('Qty'),
+							in_list_view: 1
+						}, {
+							fieldtype: 'Data',
+							fieldname: 'sales_order_item',
+							reqd: 1,
+							label: __('Sales Order Item'),
+							hidden: 1
+						}],
+						data: r.message,
+						get_data: () => {
+							return r.message
 						}
-					]
+					}]
 					var d = new frappe.ui.Dialog({
 						title: __('Select Items to Manufacture'),
 						fields: fields,

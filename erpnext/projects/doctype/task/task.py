@@ -7,7 +7,7 @@ import json
 
 import frappe
 from frappe import _, throw
-from frappe.utils import add_days, cstr, date_diff, get_link_to_form, getdate
+from frappe.utils import add_days, cstr, date_diff, get_link_to_form, getdate, today
 from frappe.utils.nestedset import NestedSet
 
 
@@ -47,8 +47,8 @@ class Task(NestedSet):
 	def validate_status(self):
 		if self.status!=self.get_db_value("status") and self.status == "Closed":
 			for d in self.depends_on:
-				if frappe.db.get_value("Task", d.task, "status") != "Closed":
-					frappe.throw(_("Cannot close task as its dependant task {0} is not closed.").format(d.task))
+				if frappe.db.get_value("Task", d.task, "status") not in ("Closed", "Cancelled"):
+					frappe.throw(_("Cannot close task as its dependant task {0} is not closed/cancelled.").format(d.task))
 
 			from frappe.desk.form.assign_to import clear
 			clear(self.doctype, self.name)
@@ -199,8 +199,11 @@ def set_multiple_status(names, status):
 		task.save()
 
 def set_tasks_as_overdue():
-	tasks = frappe.get_all("Task", filters={'status':['not in',['Cancelled', 'Closed']]})
+	tasks = frappe.get_all("Task", filters={"status": ["not in", ["Cancelled", "Closed"]]}, fields=["name", "status", "review_date"])
 	for task in tasks:
+		if task.status == "Pending Review":
+			if getdate(task.review_date) > getdate(today()):
+				continue
 		frappe.get_doc("Task", task.name).update_status()
 
 @frappe.whitelist()

@@ -124,6 +124,7 @@ class Item(WebsiteGenerator):
 		self.validate_item_defaults()
 		self.update_defaults_from_item_group()
 		self.validate_stock_for_has_batch_and_has_serial()
+		self.update_show_in_website()
 
 		if not self.get("__islocal"):
 			self.old_item_group = frappe.db.get_value(self.doctype, self.name, "item_group")
@@ -189,6 +190,9 @@ class Item(WebsiteGenerator):
 					'route')) + '/' + self.scrub((self.item_name if self.item_name else self.item_code) + '-' + random_string(5))
 
 	def validate_website_image(self):
+		if frappe.flags.in_import:
+			return
+
 		"""Validate if the website image is a public file"""
 		auto_set_website_image = False
 		if not self.website_image and self.image:
@@ -208,8 +212,7 @@ class Item(WebsiteGenerator):
 
 		if not file_doc:
 			if not auto_set_website_image:
-				frappe.msgprint(_("Website Image {0} attached to Item {1} cannot be found")
-									.format(self.website_image, self.name))
+				frappe.msgprint(_("Website Image {0} attached to Item {1} cannot be found").format(self.website_image, self.name))
 
 			self.website_image = None
 
@@ -220,6 +223,9 @@ class Item(WebsiteGenerator):
 			self.website_image = None
 
 	def make_thumbnail(self):
+		if frappe.flags.in_import:
+			return
+
 		"""Make a thumbnail of `website_image`"""
 		import requests.exceptions
 
@@ -432,6 +438,10 @@ class Item(WebsiteGenerator):
 
 		[self.remove(d) for d in to_remove]
 
+	def update_show_in_website(self):
+		if self.disabled:
+			self.show_in_website = False
+
 	def update_template_tables(self):
 		template = frappe.get_doc("Item", self.variant_of)
 
@@ -508,7 +518,7 @@ class Item(WebsiteGenerator):
 						"""select parent from `tabItem Barcode` where barcode = %s and parent != %s""", (item_barcode.barcode, self.name))
 					if duplicate:
 						frappe.throw(_("Barcode {0} already used in Item {1}").format(
-							item_barcode.barcode, duplicate[0][0]), frappe.DuplicateEntryError)
+							item_barcode.barcode, duplicate[0][0]))
 
 					item_barcode.barcode_type = "" if item_barcode.barcode_type not in options else item_barcode.barcode_type
 					if item_barcode.barcode_type and item_barcode.barcode_type.upper() in ('EAN', 'UPC-A', 'EAN-13', 'EAN-8'):

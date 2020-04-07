@@ -58,7 +58,9 @@ class AccountsController(TransactionBase):
 
 	def validate(self):
 
-		self.validate_qty_is_not_zero()
+		if not self.get('is_return'):
+			self.validate_qty_is_not_zero()
+
 		if self.get("_action") and self._action != "update_after_submit":
 			self.set_missing_values(for_validate=True)
 
@@ -85,7 +87,7 @@ class AccountsController(TransactionBase):
 		self.validate_currency()
 
 		if self.doctype == 'Purchase Invoice':
-			self.validate_paid_amount()
+			self.calculate_paid_amount()
 
 		if self.doctype in ['Purchase Invoice', 'Sales Invoice']:
 			pos_check_field = "is_pos" if self.doctype=="Sales Invoice" else "is_paid"
@@ -129,22 +131,23 @@ class AccountsController(TransactionBase):
 			else:
 				df.set("print_hide", 1)
 
-	def validate_paid_amount(self):
+	def calculate_paid_amount(self):
 		if hasattr(self, "is_pos") or hasattr(self, "is_paid"):
 			is_paid = self.get("is_pos") or self.get("is_paid")
-			if cint(is_paid) == 1:
-				if flt(self.paid_amount) == 0 and flt(self.outstanding_amount) > 0:
-					if self.cash_bank_account:
-						self.paid_amount = flt(flt(self.outstanding_amount), self.precision("paid_amount"))
-						self.base_paid_amount = flt(self.paid_amount * self.conversion_rate,
-													self.precision("base_paid_amount"))
-					else:
-						# show message that the amount is not paid
-						self.paid_amount = 0
-						frappe.throw(
-							_("Note: Payment Entry will not be created since 'Cash or Bank Account' was not specified"))
-			else:
-				frappe.db.set(self, 'paid_amount', 0)
+
+			if is_paid:
+				if not self.cash_bank_account:
+					# show message that the amount is not paid
+					frappe.throw(_("Note: Payment Entry will not be created since 'Cash or Bank Account' was not specified"))
+
+				if cint(self.is_return) and (self.grand_total > self.paid_amount):
+					self.paid_amount = flt(flt(self.grand_total), self.precision("paid_amount"))
+
+				elif not flt(self.paid_amount) and flt(self.outstanding_amount) > 0:
+					self.paid_amount = flt(flt(self.outstanding_amount), self.precision("paid_amount"))
+
+				self.base_paid_amount = flt(self.paid_amount * self.conversion_rate,
+										self.precision("base_paid_amount"))
 
 	def set_missing_values(self, for_validate=False):
 		if frappe.flags.in_test:
@@ -372,9 +375,10 @@ class AccountsController(TransactionBase):
 		return gl_dict
 
 	def validate_qty_is_not_zero(self):
-		for item in self.items:
-			if not item.qty:
-				frappe.throw(_("Item quantity can not be zero"))
+		if self.doctype != "Purchase Receipt":
+			for item in self.items:
+				if not item.qty:
+					frappe.throw(_("Item quantity can not be zero"))
 
 	def validate_account_currency(self, account, account_currency=None):
 		valid_currency = [self.company_currency]
@@ -825,7 +829,7 @@ class AccountsController(TransactionBase):
 
 			if self.doctype in ("Sales Invoice", "Purchase Invoice"):
 				grand_total = grand_total - flt(self.write_off_amount)
-			if total != grand_total:
+			if total != flt(grand_total, self.precision("grand_total")):
 				frappe.throw(_("Total Payment Amount in Payment Schedule must be equal to Grand / Rounded Total"))
 
 	def is_rounded_total_disabled(self):
@@ -1094,6 +1098,8 @@ def get_supplier_block_status(party_name):
 @frappe.whitelist()
 def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name):
 	data = json.loads(trans_items)
+	sales_doctypes = ['Sales Order', 'Sales Invoice', 'Delivery Note', 'Quotation']
+
 	for d in data:
 		child_item = frappe.get_doc(parent_doctype + ' Item', d.get("docname"))
 
@@ -1110,6 +1116,28 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name):
 						 .format(child_item.idx, child_item.item_code))
 		else:
 			child_item.rate = flt(d.get("rate"))
+		if flt(child_item.price_list_rate):
+			if flt(child_item.rate) > flt(child_item.price_list_rate):
+				#  if rate is greater than price_list_rate, set margin
+				#  or set discount
+				child_item.discount_percentage = 0
+
+				if parent_doctype in sales_doctypes:
+					child_item.margin_type = "Amount"
+					child_item.margin_rate_or_amount = flt(child_item.rate - child_item.price_list_rate,
+						child_item.precision("margin_rate_or_amount"))
+					child_item.rate_with_margin = child_item.rate
+			else:
+				child_item.discount_percentage = flt((1 - flt(child_item.rate) / flt(child_item.price_list_rate)) * 100.0,
+					child_item.precision("discount_percentage"))
+				child_item.discount_amount = flt(
+					child_item.price_list_rate) - flt(child_item.rate)
+
+				if parent_doctype in sales_doctypes:
+					child_item.margin_type = ""
+					child_item.margin_rate_or_amount = 0
+					child_item.rate_with_margin = 0
+
 		child_item.flags.ignore_validate_update_after_submit = True
 		child_item.save()
 

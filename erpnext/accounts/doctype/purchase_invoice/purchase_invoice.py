@@ -251,7 +251,7 @@ class PurchaseInvoice(BuyingController):
 	def set_against_expense_account(self):
 		against_accounts = []
 		for item in self.get("items"):
-			if item.expense_account not in against_accounts:
+			if item.expense_account and (item.expense_account not in against_accounts):
 				against_accounts.append(item.expense_account)
 
 		self.against_expense_account = ",".join(against_accounts)
@@ -337,6 +337,7 @@ class PurchaseInvoice(BuyingController):
 
 		if not self.is_return:
 			self.update_against_document_in_jv()
+			self.update_billing_status_for_zero_amount_refdoc("Purchase Receipt")
 			self.update_billing_status_for_zero_amount_refdoc("Purchase Order")
 			self.update_billing_status_in_pr()
 
@@ -363,7 +364,7 @@ class PurchaseInvoice(BuyingController):
 			update_outstanding = "No" if (cint(self.is_paid) or self.write_off_account) else "Yes"
 
 			make_gl_entries(gl_entries,  cancel=(self.docstatus == 2),
-				update_outstanding=update_outstanding, merge_entries=False)
+				update_outstanding=update_outstanding, merge_entries=False, from_repost=from_repost)
 
 			if update_outstanding == "No":
 				update_outstanding_amt(self.credit_to, "Supplier", self.supplier,
@@ -750,7 +751,11 @@ class PurchaseInvoice(BuyingController):
 			)
 
 	def make_gle_for_rounding_adjustment(self, gl_entries):
-		if self.rounding_adjustment:
+		# if rounding adjustment in small and conversion rate is also small then
+		# base_rounding_adjustment may become zero due to small precision
+		# eg: rounding_adjustment = 0.01 and exchange rate = 0.05 and precision of base_rounding_adjustment is 2
+		#	then base_rounding_adjustment becomes zero and error is thrown in GL Entry
+		if self.rounding_adjustment and self.base_rounding_adjustment:
 			round_off_account, round_off_cost_center = \
 				get_round_off_account_and_cost_center(self.company)
 
@@ -777,6 +782,7 @@ class PurchaseInvoice(BuyingController):
 			if frappe.db.get_single_value('Accounts Settings', 'unlink_payment_on_cancellation_of_invoice'):
 				unlink_ref_doc_from_payment_entries(self)
 
+			self.update_billing_status_for_zero_amount_refdoc("Purchase Receipt")
 			self.update_billing_status_for_zero_amount_refdoc("Purchase Order")
 			self.update_billing_status_in_pr()
 

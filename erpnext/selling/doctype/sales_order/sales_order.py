@@ -69,9 +69,7 @@ class SalesOrder(SellingController):
 				frappe.msgprint(_("Warning: Sales Order {0} already exists against Customer's Purchase Order {1}").format(so[0][0], self.po_no))
 
 	def validate_for_items(self):
-		check_list = []
 		for d in self.get('items'):
-			check_list.append(cstr(d.item_code))
 
 			# used for production plan
 			d.transaction_date = self.transaction_date
@@ -79,13 +77,6 @@ class SalesOrder(SellingController):
 			tot_avail_qty = frappe.db.sql("select projected_qty from `tabBin` \
 				where item_code = %s and warehouse = %s", (d.item_code, d.warehouse))
 			d.projected_qty = tot_avail_qty and flt(tot_avail_qty[0][0]) or 0
-
-		# check for same entry multiple times
-		unique_chk_list = set(check_list)
-		if len(unique_chk_list) != len(check_list) and \
-			not cint(frappe.db.get_single_value("Selling Settings", "allow_multiple_items")):
-			frappe.msgprint(_("Same item has been entered multiple times"),
-				title=_("Warning"), indicator='orange')
 
 	def product_bundle_has_stock_item(self, product_bundle):
 		"""Returns true if product bundle has stock item"""
@@ -503,10 +494,12 @@ def make_material_request(source_name, target_doc=None):
 		doc.material_request_type = "Purchase"
 
 	def update_item(source, target, source_parent):
+		# qty is for packed items, because packed items don't have stock_qty field
+		qty = source.get("stock_qty") or source.get("qty")
 		target.project = source_parent.project
-		target.qty = source.stock_qty - requested_item_qty.get(source.name, 0)
+		target.qty = qty - requested_item_qty.get(source.name, 0)
 		target.conversion_factor = 1
-		target.stock_qty = source.stock_qty - requested_item_qty.get(source.name, 0)
+		target.stock_qty = qty - requested_item_qty.get(source.name, 0)
 
 	doc = get_mapped_doc("Sales Order", source_name, {
 		"Sales Order": {
@@ -629,7 +622,6 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
 			target.set_advances()
 
 	def set_missing_values(source, target):
-		target.is_pos = 0
 		target.ignore_pricing_rule = 1
 		target.flags.ignore_permissions = True
 		target.run_method("set_missing_values")
@@ -652,11 +644,14 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
 
 		if source_parent.project:
 			target.cost_center = frappe.db.get_value("Project", source_parent.project, "cost_center")
-		if not target.cost_center and target.item_code:
+		if target.item_code:
 			item = get_item_defaults(target.item_code, source_parent.company)
 			item_group = get_item_group_defaults(target.item_code, source_parent.company)
-			target.cost_center = item.get("selling_cost_center") \
+			cost_center = item.get("selling_cost_center") \
 				or item_group.get("selling_cost_center")
+
+			if cost_center:
+				target.cost_center = cost_center
 
 	doclist = get_mapped_doc("Sales Order", source_name, {
 		"Sales Order": {
@@ -980,3 +975,15 @@ def make_raw_material_request(items, company, sales_order, project=None):
 	material_request.run_method("set_missing_values")
 	material_request.submit()
 	return material_request
+
+def update_produced_qty_in_so_item(sales_order_item):
+	#for multiple work orders against same sales order item
+	linked_wo_with_so_item = frappe.db.get_all('Work Order', ['produced_qty'], {
+		'sales_order_item': sales_order_item,
+		'docstatus': 1
+	})
+	if len(linked_wo_with_so_item) > 0:
+		total_produced_qty = 0
+		for wo in linked_wo_with_so_item:
+			total_produced_qty += flt(wo.get('produced_qty'))
+		frappe.db.set_value('Sales Order Item', sales_order_item, 'produced_qty', total_produced_qty)
