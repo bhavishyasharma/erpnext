@@ -175,6 +175,18 @@ def get_data():
 					"type": "doctype",
 					"name": "Item Variant Settings",
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Customer Material Reconciliation",
+					"doctype": "Stock Entry"
+                },
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Repair Challan Reconciliation",
+					"doctype": "Stock Entry"
+				},
 			]
 		},
 		{

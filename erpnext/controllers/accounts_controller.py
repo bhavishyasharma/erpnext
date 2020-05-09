@@ -1258,6 +1258,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	parent.calculate_taxes_and_totals()
 	if parent_doctype == "Sales Order":
 		parent.set_gross_profit()
+		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
+		make_packing_list(parent)
 	frappe.get_doc('Authorization Control').validate_approving_authority(parent.doctype,
 		parent.company, parent.base_grand_total)
 
@@ -1265,6 +1267,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	if parent_doctype == 'Purchase Order':
 		parent.validate_minimum_order_qty()
 		parent.validate_budget()
+		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
+		make_packing_list(parent)
 		if parent.is_against_so():
 			parent.update_status_updater()
 	else:

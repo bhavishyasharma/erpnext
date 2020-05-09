@@ -7,7 +7,7 @@
 from __future__ import unicode_literals
 import frappe
 
-from frappe.utils import cstr, flt, getdate, new_line_sep, nowdate, add_days
+from frappe.utils import cint, cstr, flt, getdate, new_line_sep, nowdate, add_days
 from frappe import msgprint, _
 from frappe.model.mapper import get_mapped_doc
 from erpnext.stock.stock_balance import update_bin_qty, get_indented_qty
@@ -151,6 +151,7 @@ class MaterialRequest(BuyingController):
 		if self.material_request_type == "Purchase":
 			return
 
+		float_precision = cint(frappe.db.get_default("float_precision")) or 3
 		if not mr_items:
 			mr_items = [d.name for d in self.get("items")]
 
@@ -162,7 +163,7 @@ class MaterialRequest(BuyingController):
 						and material_request_item = %s and docstatus = 1""",
 						(self.name, d.name))[0][0])
 
-					if d.ordered_qty and d.ordered_qty > d.stock_qty:
+					if d.ordered_qty and flt(d.ordered_qty, float_precision) > flt(d.stock_qty, float_precision):
 						frappe.throw(_("The total Issue / Transfer quantity {0} in Material Request {1}  \
 							cannot be greater than requested quantity {2} for Item {3}").format(d.ordered_qty, d.parent, d.qty, d.item_code))
 
