@@ -96,6 +96,7 @@ class StockEntry(StockController):
 		self.update_quality_inspection()
 		if self.work_order and self.purpose == "Manufacture":
 			self.update_so_in_serial_number()
+		self.validate_against_ste()
 
 	def on_cancel(self):
 
@@ -1316,6 +1317,32 @@ class StockEntry(StockController):
 						'reference_name': reference_name
 					})
 
+	def validate_against_ste(self):
+		if self.stock_entry_type in ['Send after Repair', 'Receive after Repair'] :
+			items = {}
+			for item in self.items:
+				if not item.against_stock_entry or not item.ste_detail:
+					frappe.throw(_("Against Stock Entry if compulsary for Item {0}").format(item.item_code))
+				ste_detail = frappe.get_doc("Stock Entry Detail", item.ste_detail)
+				if self.stock_entry_type == "Send after Repair" and item.valuation_rate != ste_detail.valuation_rate:
+					frappe.throw(_("Valuation Rate does not match with Receipt Entry for Item {0}").format(item.item_code))
+				key = (item.item_code, item.ste_detail)
+				if key in items:
+					items[key]["qty"] += item.qty
+				else:
+					items[key] = {}
+					items[key]["item_code"] = item.item_code
+					items[key]["qty"] = item.qty
+					items[key]["against_stock_entry"] = item.against_stock_entry
+					items[key]["ste_detail"] = item.ste_detail
+			for item, item_details in items.items():
+				ste_detail = frappe.get_doc("Stock Entry Detail", item_details["ste_detail"])
+				returned_qty = frappe.get_all("Stock Entry Detail", fields = ["sum(qty) as qty"],
+					filters = { 'against_stock_entry': item_details["against_stock_entry"],
+						'ste_detail': item_details["ste_detail"],'docstatus': 1, 'parent': ['!=', self.name]})
+				if flt(item_details["qty"])+flt(returned_qty[0]["qty"]) > flt(ste_detail.qty):
+					frappe.throw(_("{0} qty out of {1} qty already {2} for Item {3} against Stock Entry {4}:{5}.").format(returned_qty[0]["qty"], ste_detail.qty, "sent" if self.stock_entry_type == "Send after Repair" else "received",item_details["item_code"], ste_detail.parent, ste_detail.name))
+
 @frappe.whitelist()
 def move_sample_to_retention_warehouse(company, items):
 	if isinstance(items, string_types):
@@ -1529,3 +1556,115 @@ def validate_sample_quantity(item_code, sample_quantity, qty, batch_no = None):
 			format(max_retain_qty, batch_no, item_code), alert=True)
 		sample_quantity = qty_diff
 	return sample_quantity
+
+def customer_stock_entry_query(doctype, txt, searchfield, start, page_len, filters):
+	from frappe.desk.reportview import get_match_cond
+	customer = filters.pop('customer')
+	purpose = filters.pop('purpose')
+	condition = ""
+	for fieldname, value in iteritems(filters):
+		condition += " and {field}={value}".format(
+			field=fieldname,
+			value=value
+		)
+	return frappe.db.sql("""select
+			`tabStock Entry`.name, `tabStock Entry`.customer, `tabStock Entry`.posting_date
+		from
+			`tabStock Entry`
+		where
+			`tabStock Entry`.customer = %(customer)s and 
+			`tabStock Entry`.purpose = %(purpose)s and
+			`tabStock Entry`.docstatus = 1 and
+ 			`tabStock Entry`.`{key}` like %(txt)s
+			{mcond}
+		order by 
+			if(locate(%(_txt)s, `tabStock Entry`.name), locate(%(_txt)s, `tabStock Entry`.name), 99999),
+			`tabStock Entry`.idx desc, `tabStock Entry`.name
+		limit %(start)s, %(page_len)s """.format(
+		mcond=get_match_cond(doctype),
+		key=frappe.db.escape(searchfield)),
+		{
+			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len,
+			'customer': customer,
+			'purpose': purpose
+		}
+	)
+
+def supplier_stock_entry_query(doctype, txt, searchfield, start, page_len, filters):
+	from frappe.desk.reportview import get_match_cond
+	supplier = filters.pop('supplier')
+	naming_series = filters.pop('naming_series')
+	condition = ""
+	for fieldname, value in iteritems(filters):
+		condition += " and {field}={value}".format(
+			field=fieldname,
+			value=value
+		)
+	return frappe.db.sql("""select
+			`tabStock Entry`.name, `tabStock Entry`.customer, `tabStock Entry`.posting_date
+		from
+			`tabStock Entry`
+		where
+			`tabStock Entry`.naming_series like %(naming_series)s and
+			`tabStock Entry`.supplier = %(supplier)s and 
+			`tabStock Entry`.docstatus = 1 and
+ 			`tabStock Entry`.`{key}` like %(txt)s
+			{mcond}
+		order by 
+			if(locate(%(_txt)s, `tabStock Entry`.name), locate(%(_txt)s, `tabStock Entry`.name), 99999),
+			`tabStock Entry`.idx desc, `tabStock Entry`.name
+		limit %(start)s, %(page_len)s """.format(
+		mcond=get_match_cond(doctype),
+		key=frappe.db.escape(searchfield)),
+		{
+			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len,
+			'supplier': supplier,
+			'naming_series': "%%%s%%" % frappe.db.escape(naming_series)
+		}
+	)
+
+def stock_entry_item_query(doctype, txt, searchfield, start, page_len, filters):
+	from frappe.desk.reportview import get_match_cond
+	stock_entry = filters.pop('stock_entry')
+	item_code = filters.pop('item_code')
+	condition = ""
+	for fieldname, value in iteritems(filters):
+		condition += " and {field}={value}".format(
+			field=fieldname,
+			value=value
+		)
+	return frappe.db.sql("""select
+			a.name, a.item_code, a.qty, a.selling_rate, a.selling_amount
+		from
+			`tabStock Entry Detail` a
+		left join
+			`tabStock Entry Detail` b
+		on
+			a.name = b.return_stock_entry_item
+		where
+			a.parent = %(stock_entry)s and
+			a.`{key}` like %(txt)s and
+                        a.item_code = %(item_code)s and
+			b.return_stock_entry_item is null
+			{mcond}
+		order by
+			if(locate(%(_txt)s, a.name), locate(%(_txt)s, a.name), 99999),
+			a.idx desc, a.name
+		limit %(start)s, %(page_len)s """.format(
+		mcond=get_match_cond(doctype),
+		key=frappe.db.escape(searchfield)),
+		{
+			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len,
+			'stock_entry': stock_entry,
+                        'item_code': item_code
+		}
+	)
