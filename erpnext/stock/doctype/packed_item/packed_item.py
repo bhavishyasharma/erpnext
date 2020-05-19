@@ -31,6 +31,13 @@ def get_bin_qty(item, warehouse):
 		where item_code = %s and warehouse = %s""", (item, warehouse), as_dict = 1)
 	return det and det[0] or frappe._dict()
 
+def get_item_supplier_code(item_code, supplier):
+	return frappe.db.sql("""
+		select i.supplier_part_no as supplier_code
+		from `tabItem Supplier` i
+		where i.parent = %s and i.supplier = %s""",
+		(item_code, supplier), as_dict = 1)
+
 def update_packing_list_item(doc, packing_item_code, qty, weightage_per_qty, main_item_row, description):
 	if doc.amended_from:
 		old_packed_items_map = get_old_packed_item_details(doc.packed_items)
@@ -56,6 +63,10 @@ def update_packing_list_item(doc, packing_item_code, qty, weightage_per_qty, mai
 	pi.uom = item.stock_uom
 	pi.qty = flt(qty)
 	pi.weightage_per_qty = flt(weightage_per_qty)
+	if isinstance(doc, BuyingController):
+		supplier_codes = get_item_supplier_code(pi.item_code, doc.supplier)
+		if len(supplier_codes) > 0:
+			pi.supplier_item_code = supplier_codes[0].supplier_code
 	if description and not pi.description:
 		pi.description = description
 	if not pi.warehouse and not doc.amended_from:
