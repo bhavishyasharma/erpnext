@@ -187,6 +187,12 @@ def get_data():
 					"name": "Repair Challan Reconciliation",
 					"doctype": "Stock Entry"
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Under Warranty Material Report",
+					"doctype": "Stock Entry"
+				},
 			]
 		},
 		{
