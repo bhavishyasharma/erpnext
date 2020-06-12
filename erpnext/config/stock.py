@@ -193,6 +193,12 @@ def get_data():
 					"name": "Under Warranty Material Report",
 					"doctype": "Stock Entry"
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Pending Customer Material for Repair",
+					"doctype": "Stock Entry"
+				},
 			]
 		},
 		{
