@@ -46,9 +46,9 @@ class ProductBundle(Document):
 			self.total_weightage = weightage_sum
 
 	def validate_total_weightage(self):
-		if self.total_weightage != 100:
+		if flt(self.total_weightage, 2) != flt(100.00, 2):
 			frappe.throw(
-				_("Total weightage should be 100%. Current total weightage is {0}").format(self.total_weightage))
+				_("Total weightage should be 100%. Current total weightage is {0}").format(flt(self.total_weightage,2)))
 
 def get_new_item_code(doctype, txt, searchfield, start, page_len, filters):
 	from erpnext.controllers.queries import get_match_cond
