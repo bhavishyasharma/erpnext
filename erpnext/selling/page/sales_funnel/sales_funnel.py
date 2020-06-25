@@ -27,7 +27,7 @@ def get_funnel_data(from_date, to_date, company):
 		and status != "Lost" and company=%s""", (from_date, to_date, company))[0][0]
 
 	sales_orders = frappe.db.sql("""select count(*) from `tabSales Order`
-		where docstatus = 1 and (date(`creation`) between %s and %s) and company=%s""", (from_date, to_date, company))[0][0]
+		where docstatus = 1 and (date(`creation`) between %s and %s) and company=%s and name like %s""", (from_date, to_date, company, '%MSO%'))[0][0]
 
 	return [
 		{ "title": _("Active Leads / Customers"), "value": active_leads, "color": "#B03B46" },
