@@ -1,0 +1,194 @@
+{
+ "autoname": "format:{brand}-{abbreviation}-{clamping_unit_international_size}/{injection_unit_international_size}",
+ "creation": "2020-07-04 15:12:16.846836",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "brand",
+  "series",
+  "abbreviation",
+  "is_own",
+  "is_standard",
+  "injection_unit_section",
+  "injection_unit_international_size",
+  "injection_unit_parameters",
+  "screw_stroke",
+  "screw_speed",
+  "nozzle_force",
+  "nozzle_protrusion",
+  "clamping_unit_section",
+  "clamping_unit_international_size",
+  "clamping_unit_parameters",
+  "other_details_section",
+  "motor_load",
+  "heating_load",
+  "heating_zones",
+  "dimensions",
+  "oil_tank_capacity",
+  "hopper_capacity",
+  "machine_weight"
+ ],
+ "fields": [
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Brand",
+   "options": "Competitor Brand",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.brand",
+   "fieldname": "series",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Series",
+   "options": "Competitor Series",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "series.abbreviation",
+   "fieldname": "abbreviation",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Abbreviation"
+  },
+  {
+   "default": "0",
+   "fetch_from": "brand.is_own",
+   "fieldname": "is_own",
+   "fieldtype": "Check",
+   "label": "Is Own"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_standard",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Standard"
+  },
+  {
+   "fieldname": "injection_unit_section",
+   "fieldtype": "Section Break",
+   "label": "Injection Unit"
+  },
+  {
+   "fieldname": "injection_unit_international_size",
+   "fieldtype": "Data",
+   "label": "International Size",
+   "reqd": 1
+  },
+  {
+   "fieldname": "injection_unit_parameters",
+   "fieldtype": "Table",
+   "label": "Parameters",
+   "options": "Competitor Model Injection Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "screw_stroke",
+   "fieldtype": "Float",
+   "label": "Screw Stroke"
+  },
+  {
+   "fieldname": "screw_speed",
+   "fieldtype": "Float",
+   "label": "Screw Speed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nozzle_force",
+   "fieldtype": "Float",
+   "label": "Nozzle Force",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nozzle_protrusion",
+   "fieldtype": "Float",
+   "label": "Nozzle Protrusion"
+  },
+  {
+   "fieldname": "clamping_unit_section",
+   "fieldtype": "Section Break",
+   "label": "Clamping Unit"
+  },
+  {
+   "fieldname": "clamping_unit_international_size",
+   "fieldtype": "Data",
+   "label": "International Size",
+   "reqd": 1
+  },
+  {
+   "fieldname": "clamping_unit_parameters",
+   "fieldtype": "Table",
+   "label": "Parameters",
+   "options": "Competitor Model Clamping Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "other_details_section",
+   "fieldtype": "Section Break",
+   "label": "Other Details"
+  },
+  {
+   "fieldname": "motor_load",
+   "fieldtype": "Float",
+   "label": "Motor Load",
+   "reqd": 1
+  },
+  {
+   "fieldname": "heating_load",
+   "fieldtype": "Float",
+   "label": "Heating Load",
+   "reqd": 1
+  },
+  {
+   "fieldname": "heating_zones",
+   "fieldtype": "Int",
+   "label": "Heating Zones"
+  },
+  {
+   "fieldname": "dimensions",
+   "fieldtype": "Data",
+   "label": "Dimensions"
+  },
+  {
+   "fieldname": "oil_tank_capacity",
+   "fieldtype": "Float",
+   "label": "Oil Tank Capacity"
+  },
+  {
+   "fieldname": "hopper_capacity",
+   "fieldtype": "Float",
+   "label": "Hopper Capacity"
+  },
+  {
+   "fieldname": "machine_weight",
+   "fieldtype": "Float",
+   "label": "Machine Weight"
+  }
+ ],
+ "modified": "2020-07-04 18:21:38.264284",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Competitor Model",
+ "owner": "bhavishya@futech.co.in",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

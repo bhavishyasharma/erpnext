@@ -1,0 +1,90 @@
+{
+ "creation": "2020-07-04 15:24:13.426267",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "parameter_name",
+  "unit",
+  "p_index",
+  "a_",
+  "a",
+  "b",
+  "c",
+  "d"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "parameter_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Parameter Name",
+   "options": "Competitor Model Injection Unit Parameter",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "parameter_name.unit",
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "a_",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "A+"
+  },
+  {
+   "columns": 1,
+   "fieldname": "a",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "A"
+  },
+  {
+   "columns": 1,
+   "fieldname": "b",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "B",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "c",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "C"
+  },
+  {
+   "columns": 1,
+   "fieldname": "d",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "D"
+  },
+  {
+   "fetch_from": "parameter_name.p_index",
+   "fieldname": "p_index",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "P Index"
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-07-04 22:48:31.308156",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Competitor Model Injection Unit",
+ "owner": "bhavishya@futech.co.in",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

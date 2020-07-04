@@ -1,0 +1,46 @@
+{
+ "creation": "2020-07-04 18:04:29.802708",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "models",
+  "get_comparison"
+ ],
+ "fields": [
+  {
+   "fieldname": "models",
+   "fieldtype": "Table MultiSelect",
+   "label": "Models",
+   "options": "Competition Comparison List",
+   "reqd": 1
+  },
+  {
+   "fieldname": "get_comparison",
+   "fieldtype": "Button",
+   "label": "Get Comparison"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2020-07-04 18:33:16.526148",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Competition Comparison",
+ "owner": "bhavishya@futech.co.in",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

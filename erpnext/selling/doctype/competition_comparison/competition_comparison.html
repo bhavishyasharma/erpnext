@@ -1,0 +1,85 @@
+<style>
+	.print-format {
+		width: 11.69in;
+		max-width: 11.69in;
+		max-height: 8.3in !important;
+		min-height: 8.3in !important;
+		height: 8.3in !important;
+	}
+	.container {
+		max-width: 11.29in;
+	}
+	.font-weight-bold {
+		font-weight: bold;
+	}
+	.print-format td, .print-format th {
+		padding: 2px !important;
+	}
+	h3 {
+		margin-top: 5px !important;
+		margin-bottom: 2px !important;
+	}
+	.table {
+		margin-top: 5px !important;
+		margin-bottom: 5px !important;
+	}
+	.first-half {
+		float: left;
+		width: 50%;
+	}
+	.second-half {
+		float: right;
+		width: 50%;
+	}
+	{% if print_settings.with_letter_head %}
+		.print-format {
+			padding: 0mm;
+		}
+		.container {
+			padding: 5mm;
+		}
+	{% else %}
+		.print-format {
+			padding: 5mm;
+		}
+		.container {
+			padding: 0mm;
+		}
+	{% endif %}
+</style>
+<div>
+	<h3 class="text-center">{{ title }}</h3>
+</div>
+<div class="container">
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			{% for column in data.columns %}
+				<th class="text-{{ column.align }}" colspan={{ column.span }}>{{ column.label }}</th>
+			{% endfor %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for row in data.rows %}
+			<tr class="{{ row.className }}">
+				<td>{{ row.parameter }}</td>
+				<td>{{ row.unit }}</td>
+				{% for d in row.data %}
+					<td class="text-center" colspan={{ d.span }}>
+						{% if d.value == "0" %}
+							
+						{% else %}
+							{% if d.optional %}
+								<div class="first-half">{{ d.value }} (STD)</div>
+								<div class="second-half">{{ d.optional }} (OPT)</div>
+							{% else %}
+								{{ d.value }}
+							{% endif %}
+						{% endif %}
+					</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+</div>

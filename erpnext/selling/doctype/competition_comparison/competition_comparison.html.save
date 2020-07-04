@@ -1,0 +1,7 @@
+<style>
+	.print-format {
+		padding: 15mm;
+		font-size: 8.0pt !important;
+		font-family: Tahoma, sans-serif;
+	}
+

@@ -1,0 +1,29 @@
+{
+ "creation": "2020-07-04 18:11:51.078436",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "model"
+ ],
+ "fields": [
+  {
+   "fieldname": "model",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Model",
+   "options": "Competitor Model",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-07-04 18:17:33.186324",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Competition Comparison List",
+ "owner": "bhavishya@futech.co.in",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
