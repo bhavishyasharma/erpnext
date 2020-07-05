@@ -23,6 +23,7 @@ def get_screws(injection_unit_parameters):
 			screws.append('C')
 		if 'D' not in screws and i.d is not None and i.d != "":
 			screws.append('D')
+	screws.sort()
 	return screws
 
 def get_parameter_index(parameters, p_index):
