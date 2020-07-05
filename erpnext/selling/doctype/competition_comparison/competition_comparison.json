@@ -23,7 +23,7 @@
   }
  ],
  "issingle": 1,
- "modified": "2020-07-04 18:33:16.526148",
+ "modified": "2020-07-05 19:15:36.013148",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Competition Comparison",
@@ -36,6 +36,22 @@
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Sales Manager",
    "share": 1,
    "write": 1
   }

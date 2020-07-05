@@ -1,4 +1,5 @@
 {
+ "allow_import": 1,
  "autoname": "format:{brand}-{abbreviation}-{clamping_unit_international_size}/{injection_unit_international_size}",
  "creation": "2020-07-04 15:12:16.846836",
  "doctype": "DocType",
@@ -169,7 +170,7 @@
    "label": "Machine Weight"
   }
  ],
- "modified": "2020-07-04 18:21:38.264284",
+ "modified": "2020-07-05 19:15:01.427606",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Competitor Model",
@@ -180,12 +181,33 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1
   }
  ],
  "sort_field": "modified",
