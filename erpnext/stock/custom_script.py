@@ -104,7 +104,8 @@ def update_ste_expense_account(ste_no, account):
 			for item in newste.items:
 				item.expense_account = account
 			ste_name = ste.name
-			ste_name = int(ste.name.replace(ste.naming_series, ''))
+			ste_name = ste.name.replace(ste.naming_series, '')
+			ste_name = int(ste_name.split('-')[0])
 			ste.cancel()
 			ste.delete()
 			old_ns_value = frappe.db.sql("""select current from `tabSeries` where name = '{series}'""".format(series=ste.naming_series))[0][0]
@@ -119,3 +120,64 @@ def update_ste_expense_account(ste_no, account):
 	except Exception:
 		frappe.db.rollback()
 		traceback.print_exc()
+
+def fix_gst_valuation(purchase_invoice):
+	ns = frappe.get_doc('Naming Series')
+	pi = frappe.get_doc('Purchase Invoice', purchase_invoice)
+	newpi = copy.deepcopy(pi)
+	newpi.set_posting_time = 1
+	newpi.posting_date = pi.posting_date
+	newpi.posting_time = pi.posting_time
+	pi.cancel()
+	pi.delete()
+	prec = frappe.get_doc('Purchase Receipt', pi.items[0].purchase_receipt)
+	newprec = copy.deepcopy(prec)
+	newprec.set_posting_time = 1
+	newprec.posting_date = prec.posting_date
+	newprec.posting_time = prec.posting_time
+	prec.cancel()
+	prec.delete()
+	for taxrow in newprec.taxes:
+		if("GST" in taxrow.account_head):
+			taxrow.category = 'Total'
+		elif("reight" in taxrow.account_head):
+			taxrow.category = "Valuation and Total"
+		else:
+			taxrow.category = "Valuation and Total"
+	ns.prefix = newprec.naming_series
+	old_prec_ns_value = frappe.db.sql("""select current from `tabSeries` where name = '{series}'""".format(series=ns.prefix))[0][0]
+	prec_name = newprec.name
+	prec_name = prec_name.replace(ns.prefix, '')
+	prec_name = int(prec_name.split('-')[0])
+	ns.current_value = prec_name - 1
+	ns.update_series_start()
+	newprec.insert()
+	for taxrow in newpi.taxes:
+		if("GST" in taxrow.account_head):
+			taxrow.category = 'Total'
+		elif("reight" in taxrow.account_head):
+			taxrow.category = "Valuation and Total"
+		else:
+			taxrow.category = "Valuation and Total"
+	ns.prefix = newpi.naming_series
+	old_pinv_ns_value = frappe.db.sql("""select current from `tabSeries` where name = '{series}'""".format(series=ns.prefix))[0][0]
+	pinv_name = newpi.name
+	pinv_name = pinv_name.replace(ns.prefix, '')
+	pinv_name = int(pinv_name.split('-')[0])
+	ns.current_value = pinv_name - 1
+	ns.update_series_start()
+	for item in newpi.items:
+		index = 0
+		for itemX in prec.items:
+			if(itemX.name == item.pr_detail):
+				break
+			index = index+1
+		item.pr_detail = newprec.items[index].name
+	newpi.insert()
+	ns.prefix = newprec.naming_series
+	ns.current_value = old_prec_ns_value
+	ns.update_series_start()
+	ns.prefix = newpi.naming_series
+	ns.current_value = old_pinv_ns_value
+	ns.update_series_start()
+	frappe.db.commit()
