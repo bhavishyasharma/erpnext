@@ -316,5 +316,42 @@ def get_data():
 				}
 			]
 		},
-		
+		{
+            "label": _("Competition"),
+            "icon": "fa fa-list",
+            "items": [
+				{
+                    "type": "doctype",
+                    "name": "Competition Comparison",
+                    "description": _("Compare different machine models from different brands"),
+                },
+				{
+                    "type": "doctype",
+                    "name": "Competitor Model",
+                    "description": _("Competitor Model Database."),
+                },
+				{
+                    "type": "doctype",
+                    "name": "Competitor Series",
+                    "description": _("Compretitor Series Database."),
+                },
+				{
+                    "type": "doctype",
+                    "name": "Competitor Brand",
+                    "description": _("Competitor Brand Database."),
+                },
+				{
+                    "type": "doctype",
+                    "label": "Injection Unit Parameters",
+					"name": "Competitor Model Injection Unit Parameter",
+                    "description": _("Injection Unit Parameters Database."),
+                },
+				{
+                    "type": "doctype",
+					"label": "Clamping Unit Parameters",
+                    "name": "Competitor Model Clamping Unit Parameter",
+                    "description": _("Clamping Unit Parameters Database."),
+                }
+			]
+		},
 	]
