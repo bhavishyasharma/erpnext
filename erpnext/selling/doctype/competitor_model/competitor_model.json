@@ -89,24 +89,23 @@
   },
   {
    "fieldname": "screw_stroke",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Screw Stroke"
   },
   {
    "fieldname": "screw_speed",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Screw Speed",
    "reqd": 1
   },
   {
    "fieldname": "nozzle_force",
-   "fieldtype": "Float",
-   "label": "Nozzle Force",
-   "reqd": 1
+   "fieldtype": "Data",
+   "label": "Nozzle Force"
   },
   {
    "fieldname": "nozzle_protrusion",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Nozzle Protrusion"
   },
   {
@@ -134,19 +133,19 @@
   },
   {
    "fieldname": "motor_load",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Motor Load",
    "reqd": 1
   },
   {
    "fieldname": "heating_load",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Heating Load",
    "reqd": 1
   },
   {
    "fieldname": "heating_zones",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Heating Zones"
   },
   {
@@ -156,21 +155,21 @@
   },
   {
    "fieldname": "oil_tank_capacity",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Oil Tank Capacity"
   },
   {
    "fieldname": "hopper_capacity",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Hopper Capacity"
   },
   {
    "fieldname": "machine_weight",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Machine Weight"
   }
  ],
- "modified": "2020-07-05 19:15:01.427606",
+ "modified": "2020-07-05 22:56:16.089659",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Competitor Model",
