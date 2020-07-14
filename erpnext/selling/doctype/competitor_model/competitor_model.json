@@ -134,8 +134,7 @@
   {
    "fieldname": "motor_load",
    "fieldtype": "Data",
-   "label": "Motor Load",
-   "reqd": 1
+   "label": "Motor Load"
   },
   {
    "fieldname": "heating_load",
@@ -169,8 +168,8 @@
    "label": "Machine Weight"
   }
  ],
- "modified": "2020-07-05 22:56:16.089659",
- "modified_by": "Administrator",
+ "modified": "2020-07-14 23:10:46.619040",
+ "modified_by": "bhavishya@futech.co.in",
  "module": "Selling",
  "name": "Competitor Model",
  "owner": "bhavishya@futech.co.in",

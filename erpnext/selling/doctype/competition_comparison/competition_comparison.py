@@ -24,6 +24,9 @@ def get_screws(injection_unit_parameters):
 		if 'D' not in screws and i.d is not None and i.d != "":
 			screws.append('D')
 	screws.sort()
+	if 'A' in screws and 'A+' in screws:
+		screws[0] = 'A+'
+		screws[1] = 'A'
 	return screws
 
 def get_parameter_index(parameters, p_index):
@@ -102,8 +105,8 @@ def get_comparison(models):
 	rows.append({
 		"key": "nozzle_force",
 		"parameter": "Nozzle Force",
-		"unitName": "kN",
-		"class": "",
+		"unit": "kN",
+		"className": "",
 		"empty": False,
 		"from_model": True,
 		"data": []
