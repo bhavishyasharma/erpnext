@@ -27,7 +27,7 @@ def complete_work_order(work_order):
 			frappe.db.rollback()
 			traceback.print_exc()
 
-def create_finishing_entry(work_order_number, se_date, se_time=None, se_series=None, se_name=None):
+def create_finishing_entry(work_order_number, se_date, account, se_time=None, se_series=None, se_name=None):
 	work_order = frappe.get_doc("Work Order", work_order_number)
 	from erpnext.stock.report.stock_balance.stock_balance import execute as stock_balance_report
 	columns, items = stock_balance_report({
@@ -60,9 +60,11 @@ def create_finishing_entry(work_order_number, se_date, se_time=None, se_series=N
 						't_warehouse': work_order.fg_warehouse,
 						'qty': work_order.qty})
 	for item in items:
-		ste.append('items', {'item_code': item['item_code'],
-							's_warehouse': work_order.wip_warehouse,
-							'qty': item['bal_qty']})
+		if(item['bal_qty']>0.0):
+			ste.append('items', {'item_code': item['item_code'],
+								's_warehouse': work_order.wip_warehouse,
+								'qty': item['bal_qty'],
+								'expense_account': account})
 	ste.insert()
 	if old_ns_value > -1:
 		ns = frappe.get_doc('Naming Series')
