@@ -552,6 +552,8 @@ class SalesInvoice(SellingController):
 					continue
 
 				for d in self.get('items'):
+					if not d.item_code: continue
+
 					is_stock_item = frappe.get_cached_value('Item', d.item_code, 'is_stock_item')
 					if (d.item_code and is_stock_item ==1 and not d.get(key.lower().replace(' ', '_')) and not self.get(value[1])):
 						msgprint(_("{0} is mandatory for Item {1}").format(key, d.item_code), raise_exception=1)
@@ -574,14 +576,14 @@ class SalesInvoice(SellingController):
 
 	def validate_item_code(self):
 		for d in self.get('items'):
-			if not d.item_code:
+			if not d.item_code and self.is_opening == "No":
 				msgprint(_("Item Code required at Row No {0}").format(d.idx), raise_exception=True)
 
 	def validate_warehouse(self):
 		super(SalesInvoice, self).validate_warehouse()
 
 		for d in self.get_item_list():
-			if not d.warehouse and frappe.get_cached_value("Item", d.item_code, "is_stock_item"):
+			if not d.warehouse and d.item_code and frappe.get_cached_value("Item", d.item_code, "is_stock_item"):
 				frappe.throw(_("Warehouse required for stock Item {0}").format(d.item_code))
 
 	def validate_delivery_note(self):
@@ -785,7 +787,7 @@ class SalesInvoice(SellingController):
 					"against_voucher": self.return_against if cint(self.is_return) and self.return_against else self.name,
 					"against_voucher_type": self.doctype,
 					"cost_center": self.cost_center
-				}, self.party_account_currency)
+				}, self.party_account_currency, item=self)
 			)
 
 	def make_tax_gl_entries(self, gl_entries):
@@ -802,7 +804,7 @@ class SalesInvoice(SellingController):
 							tax.precision("base_tax_amount_after_discount_amount")) if account_currency==self.company_currency else
 							flt(tax.tax_amount_after_discount_amount, tax.precision("tax_amount_after_discount_amount"))),
 						"cost_center": tax.cost_center
-					}, account_currency)
+					}, account_currency, item=tax)
 				)
 
 	def make_item_gl_entries(self, gl_entries):
@@ -822,7 +824,7 @@ class SalesInvoice(SellingController):
 
 					for gle in fixed_asset_gl_entries:
 						gle["against"] = self.customer
-						gl_entries.append(self.get_gl_dict(gle))
+						gl_entries.append(self.get_gl_dict(gle, item=item))
 
 					asset.db_set("disposal_date", self.posting_date)
 					asset.set_status("Sold" if self.docstatus==1 else None)
@@ -860,7 +862,7 @@ class SalesInvoice(SellingController):
 					"against_voucher": self.return_against if cint(self.is_return) else self.name,
 					"against_voucher_type": self.doctype,
 					"cost_center": self.cost_center
-				})
+				}, item=self)
 			)
 			gl_entries.append(
 				self.get_gl_dict({
@@ -869,7 +871,7 @@ class SalesInvoice(SellingController):
 					"against": self.customer,
 					"debit": self.loyalty_amount,
 					"remark": "Loyalty Points redeemed by the customer"
-				})
+				}, item=self)
 			)
 
 	def make_pos_gl_entries(self, gl_entries):
@@ -890,7 +892,7 @@ class SalesInvoice(SellingController):
 							"against_voucher": self.return_against if cint(self.is_return) and self.return_against else self.name,
 							"against_voucher_type": self.doctype,
 							"cost_center": self.cost_center
-						}, self.party_account_currency)
+						}, self.party_account_currency, item=self)
 					)
 
 					payment_mode_account_currency = get_account_currency(payment_mode.account)
@@ -903,7 +905,7 @@ class SalesInvoice(SellingController):
 								if payment_mode_account_currency==self.company_currency \
 								else payment_mode.amount,
 							"cost_center": self.cost_center
-						}, payment_mode_account_currency)
+						}, payment_mode_account_currency, item=self)
 					)
 
 	def make_gle_for_change_amount(self, gl_entries):
@@ -921,7 +923,7 @@ class SalesInvoice(SellingController):
 						"against_voucher": self.return_against if cint(self.is_return) and self.return_against else self.name,
 						"against_voucher_type": self.doctype,
 						"cost_center": self.cost_center
-					}, self.party_account_currency)
+					}, self.party_account_currency, item=self)
 				)
 
 				gl_entries.append(
@@ -930,7 +932,7 @@ class SalesInvoice(SellingController):
 						"against": self.customer,
 						"credit": self.base_change_amount,
 						"cost_center": self.cost_center
-					})
+					}, item=self)
 				)
 			else:
 				frappe.throw(_("Select change amount account"), title="Mandatory Field")
@@ -954,7 +956,7 @@ class SalesInvoice(SellingController):
 					"against_voucher": self.return_against if cint(self.is_return) else self.name,
 					"against_voucher_type": self.doctype,
 					"cost_center": self.cost_center
-				}, self.party_account_currency)
+				}, self.party_account_currency, item=self)
 			)
 			gl_entries.append(
 				self.get_gl_dict({
@@ -965,7 +967,7 @@ class SalesInvoice(SellingController):
 						self.precision("base_write_off_amount")) if write_off_account_currency==self.company_currency
 						else flt(self.write_off_amount, self.precision("write_off_amount"))),
 					"cost_center": self.cost_center or self.write_off_cost_center or default_cost_center
-				}, write_off_account_currency)
+				}, write_off_account_currency, item=self)
 			)
 
 	def make_gle_for_rounding_adjustment(self, gl_entries):
@@ -982,8 +984,7 @@ class SalesInvoice(SellingController):
 					"credit": flt(self.base_rounding_adjustment,
 						self.precision("base_rounding_adjustment")),
 					"cost_center": self.cost_center or round_off_cost_center,
-				}
-			))
+				}, item=self))
 
 	def update_billing_status_in_dn(self, update_modified=True):
 		updated_delivery_notes = []

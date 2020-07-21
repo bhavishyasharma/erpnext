@@ -229,7 +229,10 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 		var me = this;
 		var item = frappe.get_doc(cdt, cdn);
 
-		if (item.serial_no && item.qty === item.serial_no.split(`\n`).length) {
+		let serial_no_count = item.serial_no
+			? item.serial_no.split(`\n`).filter(d => d).length : 0;
+
+		if (item.serial_no && item.qty === serial_no_count) {
 			return;
 		}
 
@@ -429,7 +432,7 @@ erpnext.selling.SellingController = erpnext.TransactionController.extend({
 		if (doc.has_serial_no && doc.serial_no) {
 			args['serial_no'] = doc.serial_no
 		}
-		
+
 		return frappe.call({
 			method: 'erpnext.stock.doctype.batch.batch.get_batch_no',
 			args: args,

@@ -428,14 +428,23 @@ def get_leave_details(employee, date):
 	leave_allocation = {}
 	for d in allocation_records:
 		allocation = allocation_records.get(d, frappe._dict())
+
+		total_allocated_leaves = frappe.db.get_value('Leave Allocation', {
+			'from_date': ('<=', date),
+			'to_date': ('>=', date),
+			'leave_type': allocation.leave_type,
+		}, 'SUM(total_leaves_allocated)') or 0
+
 		remaining_leaves = get_leave_balance_on(employee, d, date, to_date = allocation.to_date,
 			consider_all_leaves_in_the_allocation_period=True)
+
 		end_date = allocation.to_date
 		leaves_taken = get_leaves_for_period(employee, d, allocation.from_date, end_date) * -1
 		leaves_pending = get_pending_leaves_for_period(employee, d, allocation.from_date, end_date)
 
 		leave_allocation[d] = {
-			"total_leaves": allocation.total_leaves_allocated,
+			"total_leaves": total_allocated_leaves,
+			"expired_leaves": total_allocated_leaves - (remaining_leaves + leaves_taken),
 			"leaves_taken": leaves_taken,
 			"pending_leaves": leaves_pending,
 			"remaining_leaves": remaining_leaves}
@@ -541,7 +550,7 @@ def get_remaining_leaves(allocation, leaves_taken, date, expiry):
 
 	return _get_remaining_leaves(total_leaves, allocation.to_date)
 
-def get_leaves_for_period(employee, leave_type, from_date, to_date):
+def get_leaves_for_period(employee, leave_type, from_date, to_date, do_not_skip_expired_leaves=False):
 	leave_entries = get_leave_entries(employee, leave_type, from_date, to_date)
 	leave_days = 0
 
@@ -551,8 +560,8 @@ def get_leaves_for_period(employee, leave_type, from_date, to_date):
 		if  inclusive_period and leave_entry.transaction_type == 'Leave Encashment':
 			leave_days += leave_entry.leaves
 
-		elif inclusive_period and leave_entry.transaction_type == 'Leave Allocation' \
-			and leave_entry.is_expired and not skip_expiry_leaves(leave_entry, to_date):
+		elif inclusive_period and leave_entry.transaction_type == 'Leave Allocation' and leave_entry.is_expired \
+			and (do_not_skip_expired_leaves or not skip_expiry_leaves(leave_entry, to_date)):
 			leave_days += leave_entry.leaves
 
 		elif leave_entry.transaction_type == 'Leave Application':
