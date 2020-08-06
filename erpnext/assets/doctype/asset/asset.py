@@ -737,7 +737,11 @@ def get_pro_rata_amt(row, depreciation_amount, from_date, to_date):
 	months = month_diff(to_date, from_date)
 	total_days = get_total_days(to_date, row.frequency_of_depreciation)
 
-	return (depreciation_amount * flt(days)) / flt(total_days), days, months
+#	return (depreciation_amount * flt(days)) / flt(total_days), days, months
+	if getdate(from_date).month > 3 and getdate(from_date).month < 10:
+		return depreciation_amount, days, months
+	else:
+		return depreciation_amount / 2, days, months
 
 def get_total_days(date, frequency):
 	period_start_date = add_months(date,
