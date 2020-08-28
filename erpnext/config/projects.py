@@ -95,6 +95,18 @@ def get_data():
 					"doctype": "Project",
 					"dependencies": ["Project"],
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Procurement Report",
+					"doctype": "Project",
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Assembly Report",
+					"doctype": "Project",
+				},
 			]
 		},
 		
