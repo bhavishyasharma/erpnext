@@ -28,7 +28,7 @@ def get_portal_account_statement(customer, fiscal_year):
             'from_date': str(year.year_start_date),
             'to_date': str(year.year_end_date),
             'party_type': 'Customer',
-            'party': ['Topsun Plast'],
+            'party': [customer],
             'group_by': 'Group by Voucher (Consolidated)',
             'cost_center': [], 'project': [],
             'include_default_book_entries': 1})
