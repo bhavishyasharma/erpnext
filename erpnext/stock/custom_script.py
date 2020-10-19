@@ -4,6 +4,7 @@ import traceback
 import frappe.utils as utils
 from pprint import pprint
 import copy
+import csv
 
 def complete_work_order(work_order):
 	if work_order is None:
@@ -183,3 +184,69 @@ def fix_gst_valuation(purchase_invoice):
 	ns.current_value = old_pinv_ns_value
 	ns.update_series_start()
 	frappe.db.commit()
+
+def verify_bom(file_name):
+	asms = []
+	items = []
+	with open(file_name, mode ='r')as file:
+		csvFile = csv.reader(file)
+		line_count = 0
+		errors = []
+		for row in csvFile:
+			if line_count < 8:
+				line_count += 1
+				continue
+			if "." not in row[0]:
+				try:
+					op = frappe.get_doc("Operation", row[2])
+					asms.append(row[2])
+				except:
+					errors.append(row[0] + " : Opertation not found " + row[2])
+			else:
+				try:
+					item = frappe.get_doc("Item", row[1])
+					items.append(row[1])
+				except:
+					errors.append(row[0] + " : Item not found " + row[1])
+			line_count += 1
+		print("Operations : " + str(len(asms)))
+		print("Items : " + str(len(items)))
+		print(errors)
+	return asms, items
+
+def insert_bom(file_name, item):
+	bom = frappe.new_doc("BOM")
+	with open(file_name, mode ='r')as file:
+		csvFile = csv.reader(file)
+		line_count = 0
+		operation = None
+		op_qty = 0
+		bom.item = item
+		bom.with_operations = 1
+		bom.transfer_material_against = "Job Card"
+		bom.set_rate_of_sub_assembly_item_based_on_bom = 0
+		for row in csvFile:
+			if line_count < 8:
+				line_count += 1
+				continue
+			if "." not in row[0]:
+				operation = row[2]
+				op_qty = frappe.utils.flt(row[3])
+				op = bom.append('operations', {})
+				op.operation = operation
+				op.workstation = "Assembly Bay"
+				op.time_in_mins = 10
+			elif operation is None:
+				print("Error : Operation not found at line {}".format(line_count))
+			else:
+				item = bom.append('items', {})
+				item.item_code = row[1]
+				item.operation = operation
+				item.qty = frappe.utils.flt(row[3]) * op_qty
+				item.stock_uom = item.uom
+	bom.save()
+	for item in bom.items:
+		item.stock_uom = item.uom
+	bom.save()
+	frappe.db.commit()
+	return bom
