@@ -43,11 +43,12 @@ def execute(filters=None):
 					'project': project[0],
 					'subject': taskName[0]
 				},
-				fields=['subject','status','exp_end_date','act_end_date']
+				fields=['subject','status','exp_start_date','exp_end_date','act_end_date']
 			)
 			if task and len(task)>0:
 				row.append({ 'status': task[0]['status'],
 					'end_date': task[0]['exp_end_date'],
+					'start_date': task[0]['exp_start_date'],
 					'act_end_date': task[0]['act_end_date']})
 			else:
 				row.append({})

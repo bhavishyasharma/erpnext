@@ -205,6 +205,12 @@ def get_data():
 					"name": "Pending Stand By Material",
 					"doctype": "Stock Entry"
 				},
+				{
+                                        "type": "report",
+                                        "is_query_report": True,
+                                        "name": "Pending Material for Repair at Supplier",
+                                        "doctype": "Stock Entry"
+                                },
 			]
 		},
 		{

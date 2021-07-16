@@ -9,10 +9,10 @@ from frappe.utils import getdate
 def execute(filters=None):
 	columns = [
 		{
-			"label": "Customer",
-			"fieldname": "customer",
+			"label": "Supplier",
+			"fieldname": "supplier",
 			"fieldtype": "Link",
-			"options": "Customer"
+			"options": "Supplier"
 		},
 		{
 			"label": "Date",
@@ -58,11 +58,11 @@ def execute(filters=None):
 		},
 	]
 	filter = ""
-	if filters and "customer" in filters:
-		filter = filter + " and a.customer=\""+filters["supplier"] + "\" "
+	if filters and "supplier" in filters:
+		filter = filter + " and a.supplier=\""+filters["supplier"] + "\" "
 	if filters and "item_code" in filters:
 		filter = filter + " and a.item_code=\""+filters["item_code"] + "\" "
-	result = frappe.db.sql("""select a.customer, a.posting_date,
+	result = frappe.db.sql("""select a.supplier, a.posting_date,
 							a.name as challan, b.item_code,
 							b.description, b.qty, b.qty-IFNULL(c.returned_qty,0) as pending_qty,
 							b.valuation_rate as rate,
@@ -76,12 +76,12 @@ def execute(filters=None):
 								from `tabStock Entry Detail` a
 								left join `tabStock Entry` b
 								on a.parent = b.name
-								where b.stock_entry_type = "Send after Repair"
+								where b.stock_entry_type = "Receive after Repair"
                                                                 and a.docstatus=1
 								group by a.ste_detail
 							) c
 							on b.name = c.ste_detail
-							where a.stock_entry_type = 'Receive for Repair'
+							where a.stock_entry_type = 'Send for Repair'
 							and (c.returned_qty is null or b.qty <> c.returned_qty)
 							and a.docstatus=1
 							{filter}

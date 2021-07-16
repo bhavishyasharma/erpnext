@@ -16,16 +16,20 @@ frappe.query_reports["Procurement Report"] = {
 				else{
 					value = data[column.fieldname].end_date;
 				}
-				value = "<span style='color:green;font-weight:bold';>" + value + " / " + data[column.fieldname].status + "</span>";
+				value = "<span style='color:green;font-weight:bold;'>" + value + " / " + data[column.fieldname].status + "</span>";
 			}
 			else if(data[column.fieldname].status==="Working"){
-				value = "<span style='color:orange;font-weight:bold';>" + data[column.fieldname].end_date + " / " + data[column.fieldname].status + "</span>";
+				value = "<span style='color:orange;font-weight:bold;'>" + data[column.fieldname].end_date + " / " + data[column.fieldname].status + "</span>";
 			}
 			else if(data[column.fieldname].status==="Overdue"){
-				value = "<span style='color:red;font-weight:bold';>" + data[column.fieldname].end_date + " / " + data[column.fieldname].status + "</span>";
+				value = "<span style='color:red;font-weight:bold;'>" + data[column.fieldname].end_date + " / " + data[column.fieldname].status + "</span>";
 			}
-			else if(data[column.fieldname].end_date){
-				value = "<span style='color:blue;font-weight:bold';>" + data[column.fieldname].end_date + " / " + data[column.fieldname].status + "</span>";
+			else if(data[column.fieldname].start_date) {
+				let color = "blue";
+				if(frappe.datetime.get_diff(data[column.fieldname].start_date, frappe.datetime.now_date()) < 0) {
+					color = "brown";
+				}
+				value = "<span style='color:" + color + ";font-weight:bold;'>" + data[column.fieldname].start_date + " / " + data[column.fieldname].status + "</span>";
 			}
 			else {
 				value = "";

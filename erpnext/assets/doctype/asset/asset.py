@@ -128,7 +128,7 @@ class Asset(AccountsController):
 	def validate_gross_and_purchase_amount(self):
 		if self.is_existing_asset: return
 		
-		if self.gross_purchase_amount and self.gross_purchase_amount != self.purchase_receipt_amount:
+		if self.gross_purchase_amount and self.gross_purchase_amount >= 2 * self.purchase_receipt_amount:
 			frappe.throw(_("Gross Purchase Amount should be {} to purchase amount of one single Asset. {}\
 				Please do not book expense of multiple assets against one single Asset.")
 				.format(frappe.bold("equal"), "<br>"), title=_("Invalid Gross Purchase Amount"))

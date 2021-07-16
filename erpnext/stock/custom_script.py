@@ -33,7 +33,7 @@ def create_finishing_entry(work_order_number, se_date, account, se_time=None, se
 	from erpnext.stock.report.stock_balance.stock_balance import execute as stock_balance_report
 	columns, items = stock_balance_report({
 		'from_date': utils.add_to_date(se_date, days=-10),
-		'to_date': utils.add_to_date(se_date, days=-1),
+		'to_date': utils.add_to_date(se_date, days=0),
 		'warehouse': work_order.wip_warehouse})
 
 	old_ns_value = -1;
@@ -250,3 +250,18 @@ def insert_bom(file_name, item):
 	bom.save()
 	frappe.db.commit()
 	return bom
+
+def new_bom_from_work_order(work_order, bom_no):
+	items = []
+	jcs = frappe.get_list("Job Card", filters={'work_order': work_order}, fields=['name', 'operation'])
+	for jcid in jcs:
+		mtrs = frappe.get_list('Material Request', filters={'job_card': jcid['name'], 'docstatus' : 1}, fields=['name'])
+		for mtrid in mtrs:
+			mtr = frappe.get_doc('Material Request', mtrid['name'])
+			for item in mtr.items:
+				items.append({'item_code': item.item_code, 'qty': item.qty, 'operation': jcid['operation']})
+	bom = frappe.get_doc('BOM', bom_no)
+	bom.items = []
+	for item in items:
+		bom.append('items',item)
+	frappe.db.commit()
