@@ -103,6 +103,7 @@
   "bill_no",
   "bill_date",
   "more_info",
+  "project",
   "status",
   "amended_from",
   "range",
@@ -1073,13 +1074,20 @@
    "label": "Packed Items",
    "options": "Packed Item",
    "read_only": 1
+  },
+  {
+   "description": "Track this Purchase Receipt against any Project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
   }
  ],
  "icon": "fa fa-truck",
  "idx": 261,
  "is_submittable": 1,
- "modified": "2020-05-10 01:45:50.211529",
  "links": [],
+ "modified": "2020-07-15 12:49:42.095297",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt",

@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _, msgprint
 from frappe.utils import flt,cint, cstr, getdate
-
+from six import iteritems
+from collections import OrderedDict
 from erpnext.accounts.party import get_party_details
 from erpnext.stock.get_item_details import get_conversion_factor
 from erpnext.buying.utils import validate_for_items, update_last_purchase_rate
@@ -182,7 +183,7 @@ class BuyingController(StockController):
 			if item.item_code and item.qty and item.item_code in stock_and_asset_items:
 				item_proportion = flt(item.base_net_amount) / stock_and_asset_items_amount if stock_and_asset_items_amount \
 					else flt(item.qty) / stock_and_asset_items_qty
-				
+
 				if i == (last_item_idx - 1):
 					item.item_tax_amount = flt(valuation_amount_adjustment,
 						self.precision("item_tax_amount", item))
@@ -267,6 +268,9 @@ class BuyingController(StockController):
 		qty_to_be_received_map = get_qty_to_be_received(purchase_orders)
 
 		for item in self.get('items'):
+			if not item.purchase_order:
+				continue
+
 			# reset raw_material cost
 			item.rm_supp_cost = 0
 
@@ -279,15 +283,24 @@ class BuyingController(StockController):
 
 			fg_yet_to_be_received = qty_to_be_received_map.get(item_key)
 
+			if not fg_yet_to_be_received:
+				frappe.throw(_("Row #{0}: Item {1} is already fully received in Purchase Order {2}")
+					.format(item.idx, frappe.bold(item.item_code),
+						frappe.utils.get_link_to_form("Purchase Order", item.purchase_order)),
+					title=_("Limit Crossed"))
+
 			transferred_batch_qty_map = get_transferred_batch_qty_map(item.purchase_order, item.item_code)
-			backflushed_batch_qty_map = get_backflushed_batch_qty_map(item.purchase_order, item.item_code)
+			# backflushed_batch_qty_map = get_backflushed_batch_qty_map(item.purchase_order, item.item_code)
 
 			for raw_material in transferred_raw_materials + non_stock_items:
-				rm_item_key = '{}{}'.format(raw_material.rm_item_code, item.purchase_order)
+				rm_item_key = (raw_material.rm_item_code, item.item_code, item.purchase_order)
 				raw_material_data = backflushed_raw_materials_map.get(rm_item_key, {})
+				if not raw_material_data and raw_material.get('batch_nos'):
+					backflushed_raw_materials_map.setdefault(rm_item_key, {'consumed_batch': {}})
+					raw_material_data = backflushed_raw_materials_map.get(rm_item_key, {})
 
 				consumed_qty = raw_material_data.get('qty', 0)
-				consumed_serial_nos = raw_material_data.get('serial_nos', '')
+				consumed_serial_nos = raw_material_data.get('serial_no', '')
 				consumed_batch_nos = raw_material_data.get('batch_nos', '')
 
 				transferred_qty = raw_material.qty
@@ -312,19 +325,28 @@ class BuyingController(StockController):
 					set_serial_nos(raw_material, consumed_serial_nos, qty)
 
 				if raw_material.batch_nos:
+					backflushed_batch_qty_map = raw_material_data.get('consumed_batch', {})
+
 					batches_qty = get_batches_with_qty(raw_material.rm_item_code, raw_material.main_item_code,
-						qty, transferred_batch_qty_map, backflushed_batch_qty_map)
+						qty, transferred_batch_qty_map, backflushed_batch_qty_map, item.purchase_order)
+
 					for batch_data in batches_qty:
 						qty = batch_data['qty']
 						raw_material.batch_no = batch_data['batch']
-						self.append_raw_material_to_be_backflushed(item, raw_material, qty)
+						if qty > 0:
+							self.append_raw_material_to_be_backflushed(item, raw_material, qty)
 				else:
 					self.append_raw_material_to_be_backflushed(item, raw_material, qty)
 
 	def append_raw_material_to_be_backflushed(self, fg_item_doc, raw_material_data, qty):
+		qty = flt(qty, fg_item_doc.precision('qty'))
 		rm = self.append('supplied_items', {})
 		rm.update(raw_material_data)
 
+		if not rm.main_item_code:
+			rm.main_item_code = fg_item_doc.item_code
+
+		rm.reference_name = fg_item_doc.name
 		rm.required_qty = qty
 		rm.consumed_qty = qty
 
@@ -540,9 +562,19 @@ class BuyingController(StockController):
 						"serial_no": cstr(d.serial_no).strip()
 					})
 					if self.is_return:
-						original_incoming_rate = frappe.db.get_value("Stock Ledger Entry",
-							{"voucher_type": "Purchase Receipt", "voucher_no": self.return_against,
-							"item_code": d.item_code}, "incoming_rate")
+						filters = {
+							"voucher_type": self.doctype,
+							"voucher_no": self.return_against,
+							"item_code": d.item_code
+						}
+
+						if (self.doctype == "Purchase Invoice" and self.update_stock
+							and d.get("purchase_invoice_item")):
+							filters["voucher_detail_no"] = d.purchase_invoice_item
+						elif self.doctype == "Purchase Receipt" and d.get("purchase_receipt_item"):
+							filters["voucher_detail_no"] = d.purchase_receipt_item
+
+						original_incoming_rate = frappe.db.get_value("Stock Ledger Entry", filters, "incoming_rate")
 
 						sle.update({
 							"outgoing_rate": original_incoming_rate
@@ -762,7 +794,7 @@ class BuyingController(StockController):
 					if delete_asset and is_auto_create_enabled:
 						# need to delete movements to delete assets otherwise throws link exists error
 						movements = frappe.db.sql(
-							"""SELECT asm.name 
+							"""SELECT asm.name
 							FROM `tabAsset Movement` asm, `tabAsset Movement Item` asm_item
 							WHERE asm_item.parent=asm.name and asm_item.asset=%s""", asset.name, as_dict=1)
 						for movement in movements:
@@ -799,9 +831,10 @@ class BuyingController(StockController):
 		if not self.get("items"):
 			return
 
-		earliest_schedule_date = min([d.schedule_date for d in self.get("items")])
-		if earliest_schedule_date:
-			self.schedule_date = earliest_schedule_date
+		if any(d.schedule_date for d in self.get("items")):
+			# Select earliest schedule_date.
+			self.schedule_date = min(d.schedule_date for d in self.get("items")
+							if d.schedule_date is not None)
 
 		if self.schedule_date:
 			for d in self.get('items'):
@@ -867,7 +900,7 @@ def get_subcontracted_raw_materials_from_se(purchase_order, fg_item):
 			AND se.purpose='Send to Subcontractor'
 			AND se.purchase_order = %s
 			AND IFNULL(sed.t_warehouse, '') != ''
-			AND sed.subcontracted_item = %s
+			AND IFNULL(sed.subcontracted_item, '') in ('', %s)
 		GROUP BY sed.item_code, sed.subcontracted_item
 	"""
 	raw_materials = frappe.db.multisql({
@@ -884,38 +917,48 @@ def get_subcontracted_raw_materials_from_se(purchase_order, fg_item):
 	return raw_materials
 
 def get_backflushed_subcontracted_raw_materials(purchase_orders):
-	common_query = """
-		SELECT
-			CONCAT(prsi.rm_item_code, pri.purchase_order) AS item_key,
-			SUM(prsi.consumed_qty) AS qty,
-			{serial_no_concat_syntax} AS serial_nos,
-			{batch_no_concat_syntax} AS batch_nos
-		FROM `tabPurchase Receipt` pr, `tabPurchase Receipt Item` pri, `tabPurchase Receipt Item Supplied` prsi
-		WHERE
-			pr.name = pri.parent
-			AND pr.name = prsi.parent
-			AND pri.purchase_order IN %s
-			AND pri.item_code = prsi.main_item_code
-			AND pr.docstatus = 1
-		GROUP BY prsi.rm_item_code, pri.purchase_order
-	"""
+	purchase_receipts = frappe.get_all("Purchase Receipt Item",
+		fields = ["purchase_order", "item_code", "name", "parent"],
+		filters={"docstatus": 1, "purchase_order": ("in", list(purchase_orders))})
 
-	backflushed_raw_materials = frappe.db.multisql({
-		'mariadb': common_query.format(
-			serial_no_concat_syntax="GROUP_CONCAT(prsi.serial_no)",
-			batch_no_concat_syntax="GROUP_CONCAT(prsi.batch_no)"
-		),
-		'postgres': common_query.format(
-			serial_no_concat_syntax="STRING_AGG(prsi.serial_no, ',')",
-			batch_no_concat_syntax="STRING_AGG(prsi.batch_no, ',')"
-		)
-	}, (purchase_orders, ), as_dict=1)
+	distinct_purchase_receipts = {}
+	for pr in purchase_receipts:
+		key = (pr.purchase_order, pr.item_code, pr.parent)
+		distinct_purchase_receipts.setdefault(key, []).append(pr.name)
 
 	backflushed_raw_materials_map = frappe._dict()
-	for item in backflushed_raw_materials:
-		backflushed_raw_materials_map.setdefault(item.item_key, item)
+	for args, references in iteritems(distinct_purchase_receipts):
+		purchase_receipt_supplied_items = get_supplied_items(args[1], args[2], references)
+
+		for data in purchase_receipt_supplied_items:
+			pr_key = (data.rm_item_code, data.main_item_code, args[0])
+			if pr_key not in backflushed_raw_materials_map:
+				backflushed_raw_materials_map.setdefault(pr_key, frappe._dict({
+					"qty": 0.0,
+					"serial_no": [],
+					"batch_no": [],
+					"consumed_batch": {}
+				}))
+
+			row = backflushed_raw_materials_map.get(pr_key)
+			row.qty += data.consumed_qty
+
+			for field in ["serial_no", "batch_no"]:
+				if data.get(field):
+					row[field].append(data.get(field))
+
+			if data.get("batch_no"):
+				if data.get("batch_no") in row.consumed_batch:
+					row.consumed_batch[data.get("batch_no")] += data.consumed_qty
+				else:
+					row.consumed_batch[data.get("batch_no")] = data.consumed_qty
 
 	return backflushed_raw_materials_map
+
+def get_supplied_items(item_code, purchase_receipt, references):
+	return frappe.get_all("Purchase Receipt Item Supplied",
+		fields=["rm_item_code", "main_item_code", "consumed_qty", "serial_no", "batch_no"],
+		filters={"main_item_code": item_code, "parent": purchase_receipt, "reference_name": ("in", references)})
 
 def get_asset_item_details(asset_items):
 	asset_items_data = {}
@@ -998,14 +1041,15 @@ def get_transferred_batch_qty_map(purchase_order, fg_item):
 		SELECT
 			sed.batch_no,
 			SUM(sed.qty) AS qty,
-			sed.item_code
+			sed.item_code,
+			sed.subcontracted_item
 		FROM `tabStock Entry` se,`tabStock Entry Detail` sed
 		WHERE
 			se.name = sed.parent
 			AND se.docstatus=1
 			AND se.purpose='Send to Subcontractor'
 			AND se.purchase_order = %s
-			AND sed.subcontracted_item = %s
+			AND ifnull(sed.subcontracted_item, '') in ('', %s)
 			AND sed.batch_no IS NOT NULL
 		GROUP BY
 			sed.batch_no,
@@ -1013,8 +1057,10 @@ def get_transferred_batch_qty_map(purchase_order, fg_item):
 	""", (purchase_order, fg_item), as_dict=1)
 
 	for batch_data in transferred_batches:
-		transferred_batch_qty_map.setdefault((batch_data.item_code, fg_item), {})
-		transferred_batch_qty_map[(batch_data.item_code, fg_item)][batch_data.batch_no] = batch_data.qty
+		key = ((batch_data.item_code, fg_item)
+			if batch_data.subcontracted_item else (batch_data.item_code, purchase_order))
+		transferred_batch_qty_map.setdefault(key, OrderedDict())
+		transferred_batch_qty_map[key][batch_data.batch_no] = batch_data.qty
 
 	return transferred_batch_qty_map
 
@@ -1051,10 +1097,11 @@ def get_backflushed_batch_qty_map(purchase_order, fg_item):
 
 	return backflushed_batch_qty_map
 
-def get_batches_with_qty(item_code, fg_item, required_qty, transferred_batch_qty_map, backflushed_batch_qty_map):
+def get_batches_with_qty(item_code, fg_item, required_qty, transferred_batch_qty_map, backflushed_batches, po):
 	# Returns available batches to be backflushed based on requirements
 	transferred_batches = transferred_batch_qty_map.get((item_code, fg_item), {})
-	backflushed_batches = backflushed_batch_qty_map.get((item_code, fg_item), {})
+	if not transferred_batches:
+		transferred_batches = transferred_batch_qty_map.get((item_code, po), {})
 
 	available_batches = []
 
@@ -1065,9 +1112,15 @@ def get_batches_with_qty(item_code, fg_item, required_qty, transferred_batch_qty
 		if available_qty >= required_qty:
 			available_batches.append({'batch': batch, 'qty': required_qty})
 			break
-		else:
+		elif available_qty != 0:
 			available_batches.append({'batch': batch, 'qty': available_qty})
 			required_qty -= available_qty
+
+	for row in available_batches:
+		if backflushed_batches.get(row.get('batch'), 0) > 0:
+			backflushed_batches[row.get('batch')] += row.get('qty')
+		else:
+			backflushed_batches.setdefault(row.get('batch'), row.get('qty'))
 
 	return available_batches
 
