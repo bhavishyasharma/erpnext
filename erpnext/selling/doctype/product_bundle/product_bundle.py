@@ -30,8 +30,8 @@ class ProductBundle(Document):
 	def validate_child_items(self):
 		for item in self.items:
 			if frappe.db.exists("Product Bundle", item.item_code):
-				frappe.throw(_("Child Item should not be a Product Bundle. Please remove item `{0}` and save").format(item.item_code))
-				
+				frappe.throw(_("Row #{0}: Child Item should not be a Product Bundle. Please remove Item {1} and Save").format(item.idx, frappe.bold(item.item_code)))
+
 	def calculate_total_weightage(self):
 		weightage_sum = 0.0
 		qty_sum = 0.0
@@ -49,10 +49,7 @@ class ProductBundle(Document):
 
 	def validate_total_weightage(self):
 		if flt(self.total_weightage, 2) != flt(100.00, 2):
-			frappe.throw(
-				_("Total weightage should be 100%. Current total weightage is {0}").format(flt(self.total_weightage,2)))
-
-				frappe.throw(_("Row #{0}: Child Item should not be a Product Bundle. Please remove Item {1} and Save").format(item.idx, frappe.bold(item.item_code)))
+			frappe.throw(_("Total weightage should be 100%. Current total weightage is {0}").format(flt(self.total_weightage,2)))
 
 	def validate_duplicate_packing_item(self):
 		items = []
