@@ -21,7 +21,6 @@ from erpnext.exceptions import InvalidCurrency
 from six import text_type
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_accounting_dimensions
 from erpnext.stock.get_item_details import get_item_warehouse, _get_item_tax_template, get_item_tax_map
-from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
 
 class AccountMissingError(frappe.ValidationError): pass
 
@@ -1382,10 +1381,9 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	parent.calculate_taxes_and_totals()
 	parent.set_total_in_words()
 	if parent_doctype == "Sales Order":
-		make_packing_list(parent)
-		parent.set_gross_profit()
 		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
 		make_packing_list(parent)
+		parent.set_gross_profit()
 	frappe.get_doc('Authorization Control').validate_approving_authority(parent.doctype,
 		parent.company, parent.base_grand_total)
 
