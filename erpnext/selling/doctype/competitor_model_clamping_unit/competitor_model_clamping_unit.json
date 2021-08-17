@@ -1,0 +1,66 @@
+{
+ "creation": "2020-07-04 16:21:53.846606",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "parameter_name",
+  "unit",
+  "p_index",
+  "standard",
+  "optional"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "parameter_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Parameter Name",
+   "options": "Competitor Model Clamping Unit Parameter",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "parameter_name.unit",
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "standard",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Standard",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "optional",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Optional"
+  },
+  {
+   "fetch_from": "parameter_name.p_index",
+   "fieldname": "p_index",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "P Index"
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-07-04 22:49:27.771469",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Competitor Model Clamping Unit",
+ "owner": "bhavishya@futech.co.in",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

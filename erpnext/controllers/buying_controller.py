@@ -458,6 +458,39 @@ class BuyingController(StockController, Subcontracting):
 						"serial_no": cstr(d.rejected_serial_no).strip(),
 						"incoming_rate": 0.0
 					}))
+			elif has_product_bundle(d.item_code):
+				for p in self.get("packed_items"):
+					if p.parent_detail_docname == d.name and p.parent_item == d.item_code:
+						if p.qty:
+							sle = self.get_sl_entries(p, {
+								"actual_qty": flt(p.qty),
+								"serial_no": cstr(p.serial_no).strip()
+							})
+							if self.is_return:
+								original_incoming_rate = frappe.db.get_value("Stock Ledger Entry",
+																			 {"voucher_type": "Purchase Receipt",
+																			  "voucher_no": self.return_against,
+																			  "item_code": p.item_code},
+																			 "incoming_rate")
+
+								sle.update({
+									"outgoing_rate": original_incoming_rate
+								})
+							else:
+								val_rate_db_precision = 6 if cint(self.precision("valuation_rate", d)) <= 6 else 9
+								incoming_rate = flt(p.rate, val_rate_db_precision)
+								sle.update({
+									"incoming_rate": incoming_rate
+								})
+							sl_entries.append(sle)
+
+						if flt(d.rejected_qty) != 0:
+							sl_entries.append(self.get_sl_entries(p, {
+								"warehouse": d.rejected_warehouse,
+								"actual_qty": flt(d.rejected_qty)*(flt(p.qty)/flt(d.qty)),
+								"serial_no": cstr(d.rejected_serial_no).strip(),
+								"incoming_rate": 0.0
+							}))
 
 		self.make_sl_entries_for_supplier_warehouse(sl_entries)
 		self.make_sl_entries(sl_entries, allow_negative_stock=allow_negative_stock,
@@ -690,6 +723,14 @@ class BuyingController(StockController, Subcontracting):
 		else:
 			validate_item_type(self, "is_purchase_item", "purchase")
 
+	def calculate_packing_list_rates(self):
+		for p in self.get("packed_items"):
+			for i in self.get("items"):
+				if i.item_code == p.parent_item:
+					p.rate = flt(i.rate) * flt(p.weightage_per_qty)/100
+					p.amount = p.rate * p.qty
+					break
+
 def get_asset_item_details(asset_items):
 	asset_items_data = {}
 	for d in frappe.get_all('Item', fields = ["name", "auto_create_assets", "asset_naming_series"],
@@ -721,3 +762,7 @@ def validate_item_type(doc, fieldname, message):
 			error_message = _("Following item {0} is not marked as {1} item. You can enable them as {1} item from its Item master").format(items, message)
 
 		frappe.throw(error_message)
+
+def has_product_bundle(item_code):
+	return frappe.db.sql("""select name from `tabProduct Bundle`
+				where new_item_code=%s and docstatus != 2""", item_code)

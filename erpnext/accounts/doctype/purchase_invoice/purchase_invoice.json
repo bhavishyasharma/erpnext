@@ -68,6 +68,9 @@
   "pricing_rules",
   "raw_materials_supplied",
   "supplied_items",
+  "packing_list_section",
+  "packed_items",
+  "product_bundle_help",
   "section_break_26",
   "total_qty",
   "base_total",
@@ -716,6 +719,26 @@
    "options": "Purchase Receipt Item Supplied",
    "show_days": 1,
    "show_seconds": 1
+  },
+  {
+   "fieldname": "packing_list_section",
+   "fieldtype": "Section Break",
+   "label": "Packing List",
+   "options": "fa fa-suitcase",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "packed_items",
+   "fieldtype": "Table",
+   "label": "Packed Items",
+   "options": "Packed Item",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "product_bundle_help",
+   "fieldtype": "HTML",
+   "label": "Product Bundle Help",
+   "print_hide": 1
   },
   {
    "fieldname": "section_break_26",

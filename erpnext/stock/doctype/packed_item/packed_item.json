@@ -8,6 +8,7 @@
   "parent_item",
   "item_code",
   "item_name",
+  "supplier_item_code",
   "column_break_5",
   "description",
   "section_break_6",
@@ -16,6 +17,9 @@
   "conversion_factor",
   "column_break_9",
   "qty",
+  "weightage_per_qty",
+  "rate",
+  "amount",
   "uom",
   "section_break_9",
   "serial_no",
@@ -106,6 +110,32 @@
    "oldfieldname": "qty",
    "oldfieldtype": "Currency",
    "read_only": 1
+  },
+
+  {
+   "fieldname": "weightage_per_qty",
+   "fieldtype": "Percent",
+   "label": "Weightage per Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_item_code",
+   "fieldtype": "Data",
+   "label": "Supplier Item Code"
   },
   {
    "fieldname": "section_break_9",

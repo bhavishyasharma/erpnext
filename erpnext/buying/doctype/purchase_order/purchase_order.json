@@ -74,6 +74,8 @@
   "raw_material_details",
   "set_reserve_warehouse",
   "supplied_items",
+  "packing_list",
+  "packed_items",
   "taxes_section",
   "tax_category",
   "column_break_50",
@@ -1308,6 +1310,19 @@
    "options": "Warehouse",
    "show_days": 1,
    "show_seconds": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "packing_list",
+   "fieldtype": "Section Break",
+   "label": "Packing List"
+  },
+  {
+   "fieldname": "packed_items",
+   "fieldtype": "Table",
+   "label": "Packed Items",
+   "options": "Packed Item",
+   "read_only": 1
   },
   {
    "collapsible": 1,

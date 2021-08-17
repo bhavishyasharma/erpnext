@@ -21,7 +21,7 @@
  "module": "Utilities",
  "name": "addresses",
  "owner": "Administrator",
- "published": 1,
+ "published": 0,
  "route": "address",
  "route_to_success_link": 0,
  "show_attachments": 0,

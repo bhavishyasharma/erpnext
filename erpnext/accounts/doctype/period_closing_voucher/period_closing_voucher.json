@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "ACC-PCV-.YYYY.-.#####",
+ "autoname": "PCV-.#####",
  "creation": "2013-01-10 16:34:07",
  "doctype": "DocType",
  "engine": "InnoDB",

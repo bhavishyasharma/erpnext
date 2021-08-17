@@ -1,0 +1,121 @@
+{% extends "templates/web.html" %}
+
+{% block title %}
+	{{ title or (_("{0} List").format(_(doctype))) }}
+{% endblock %}
+
+{% block header %}
+    <div class="row">
+        <h1>{{ title or (_("{0} List").format(_(doctype))) }}</h1>
+    </div>
+    
+{% endblock %}
+
+{% block breadcrumbs %}
+	{% include "templates/includes/breadcrumbs.html" %}
+{% endblock %}
+
+{% block page_content %}
+
+<div class="row">
+    <div class="col-xs-12 col-sm-6 col-md-4">
+        <select id="customer" type="text" autocomplete="off" class="input-with-feedback form-control bold" maxlength="140" data-fieldtype="Select" data-fieldname="company" placeholder="Select Company">
+            <option value="" disabled selected>Select Company</option>
+            {% for customer in customers %}
+                <option value="{{ customer }}">{{ customer}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4">
+        <select id="fiscal_year" type="text" autocomplete="off" class="input-with-feedback form-control bold" maxlength="140" data-fieldtype="Select" data-fieldname="company" placeholder="Select Year">
+            <option value="" disabled selected>Select Year</option>
+            {% for year in years %}
+                <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-md-4">
+        <button id="get_statement" class="btn btn-outline-secondary" aria-expanded="false">
+            <span>Get Statement</span>
+        </button>
+    </div>
+    
+</div>
+<div class="row mt-3">
+    <div class="col-xs-12">
+        <table id="table" class="table table-bordered table-hover table-sm"></table>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css">
+    <script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
+	<script>
+        $('#table').bootstrapTable({
+            autoRefresh: true,
+            columns: [
+                {
+                    field: 'posting_date',
+                    title: 'Date'
+                },
+                {
+                    field: 'voucher_type',
+                    title: 'Type'
+                },
+                {
+                    field: 'voucher_no',
+                    title: 'Voucher'
+                },
+                {
+                    field: 'debit',
+                    title: 'Debit',
+                    align: 'right',
+                    formatter: currencyFormatter
+                },
+                {
+                    field: 'credit',
+                    title: 'Credit',
+                    align: 'right',
+                    formatter: currencyFormatter
+                },
+                {
+                    field: 'balance',
+                    title: 'Balance',
+                    align: 'right',
+                    formatter: currencyFormatter
+                }
+            ],
+            data: []
+        });
+		$( "#get_statement" ).click(function() {
+            if(!$('#customer').val()){
+                frappe.throw("Please select company.");
+            }
+            else if(!$('#fiscal_year').val()){
+                frappe.throw("Please select year.");
+            }
+            else {
+                frappe.call({
+                    method: 'erpnext.accounts.portal_account_statement.get_portal_account_statement', 
+                    args: {
+                        customer: $('#customer').val(),
+                        fiscal_year: $('#fiscal_year').val()
+                    },
+                    btn: $('#get_statement'),
+                    freeze: true,
+                    callback: (r) => {
+                        $('#table').bootstrapTable('load', r.message);
+                    }
+                });
+            }
+        });
+        function currencyFormatter(value, row, index, field) {
+            return value.toLocaleString('en-IN', {
+                maximumFractionDigits: 2,
+                style: 'currency',
+                currency: 'INR'
+            });
+        }
+	</script>
+{% endblock %}

@@ -67,6 +67,8 @@
   "raw_material_details",
   "get_current_stock",
   "supplied_items",
+  "packing_list_section",
+  "packed_items",
   "taxes_charges_section",
   "tax_category",
   "shipping_col",
@@ -515,6 +517,19 @@
    "oldfieldtype": "Table",
    "options": "Purchase Receipt Item Supplied",
    "print_hide": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "packing_list_section",
+   "fieldtype": "Section Break",
+   "label": "Packing List"
+  },
+  {
+   "fieldname": "packed_items",
+   "fieldtype": "Table",
+   "label": "Packed Items",
+   "options": "Packed Item",
+   "read_only": 1
   },
   {
    "fieldname": "section_break0",

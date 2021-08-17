@@ -33,6 +33,25 @@ frappe.ui.form.on('Asset', {
 			};
 		});
 
+
+		frm.set_query("purchase_receipt_item", function() {
+			return {
+				"filters": {
+					"parent": frm.doc.purchase_receipt,
+					"item_code": frm.doc.item_code
+				}
+			};
+		});
+
+		frm.set_query("purchase_invoice_item", function() {
+			return {
+				"filters": {
+					"parent": frm.doc.purchase_invoice,
+					"item_code": frm.doc.item_code
+				}
+			};
+		});
+
 		erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
 	},
 
@@ -365,6 +384,12 @@ frappe.ui.form.on('Asset', {
 		}
 	},
 
+	purchase_receipt_item: (frm) => {
+		frappe.db.get_doc('Purchase Receipt', frm.doc.purchase_receipt).then(pr_doc => {
+			frm.events.set_values_from_purchase_doc(frm, 'Purchase Receipt', pr_doc);
+		});
+	},
+
 	purchase_invoice: (frm) => {
 		frm.trigger('toggle_reference_doc');
 		if (frm.doc.purchase_invoice) {
@@ -382,10 +407,29 @@ frappe.ui.form.on('Asset', {
 		}
 	},
 
+	purchase_invoice_item: (frm) => {
+		frappe.db.get_doc('Purchase Invoice', frm.doc.purchase_invoice).then(pi_doc => {
+			frm.events.set_values_from_purchase_doc(frm, 'Purchase Invoice', pi_doc);
+		});
+	},
+
 	set_values_from_purchase_doc: function(frm, doctype, purchase_doc) {
 		frm.set_value('company', purchase_doc.company);
 		frm.set_value('purchase_date', purchase_doc.posting_date);
-		const item = purchase_doc.items.find(item => item.item_code === frm.doc.item_code);
+		//const item = purchase_doc.items.find(item => item.item_code === frm.doc.item_code);
+		let item = null;
+		if(frm.doc.purchase_receipt_item){
+			item = purchase_doc.items.find(item => item.item_code === frm.doc.item_code && item.name === frm.doc.purchase_receipt_item);
+			console.log("Receipt : ", item);
+		}
+		else if(frm.doc.purchase_invoice_item){
+			item = purchase_doc.items.find(item => item.item_code === frm.doc.item_code && item.name === frm.doc.purchase_invoice_item);
+			console.log("Invoice : ", item);
+		}
+		else {
+			item = purchase_doc.items.find(item => item.item_code === frm.doc.item_code);
+			console.log("Else : ", item);
+		}
 		if (!item) {
 			doctype_field = frappe.scrub(doctype)
 			frm.set_value(doctype_field, '');
