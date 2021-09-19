@@ -5,10 +5,9 @@ from __future__ import unicode_literals
 import frappe
 
 from frappe.utils import get_link_to_form, flt
-
 from frappe import _
-
 from frappe.model.document import Document
+
 
 class ProductBundle(Document):
 	def autoname(self):

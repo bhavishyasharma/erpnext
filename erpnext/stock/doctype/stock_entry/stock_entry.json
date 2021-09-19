@@ -93,8 +93,6 @@
    "oldfieldtype": "Section Break"
   },
   {
-   "allow_on_submit": 1,
-   "default": "{purpose}",
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -364,6 +362,7 @@
   },
   {
    "fieldname": "scan_barcode",
+   "options": "Barcode",
    "fieldtype": "Data",
    "label": "Scan Barcode"
   },
