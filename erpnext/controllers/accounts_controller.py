@@ -50,7 +50,6 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import g
 from erpnext.stock.get_item_details import get_item_warehouse, _get_item_tax_template, get_item_tax_map
 from erpnext.controllers.print_settings import set_print_templates_for_item_table, set_print_templates_for_taxes
 from erpnext.setup.utils import get_exchange_rate
-from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
 from erpnext.stock.get_item_details import (
 	_get_item_tax_template,
 	get_conversion_factor,
