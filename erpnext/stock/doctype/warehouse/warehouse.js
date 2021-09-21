@@ -3,6 +3,12 @@
 
 
 frappe.ui.form.on("Warehouse", {
+	setup: function(frm) {
+		frm.custom_make_buttons = {
+			'Stock Entry': 'Clear Warehouse'
+		};
+	},
+
 	onload: function(frm) {
 		frm.set_query("default_in_transit_warehouse", function() {
 			return {
@@ -70,6 +76,21 @@ frappe.ui.form.on("Warehouse", {
 				}
 			}
 		}
+
+		frm.add_custom_button(__("Clear Warehouse"), function() {
+			frappe.call({
+				method: "erpnext.stock.doctype.warehouse.warehouse.clear_warehouse",
+				args: {
+					warehouse_name: frm.doc.name
+				},
+				callback: function(r) {
+					if(!r.exc) {
+						frappe.model.sync(r);
+						frappe.set_route('Form', r.doctype, r.name);
+					}
+				}
+			});
+		}).addClass('btn-warning');
 	}
 });
 

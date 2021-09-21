@@ -6,13 +6,14 @@ from __future__ import unicode_literals
 from collections import defaultdict
 
 import frappe
-from frappe import _, throw
+from frappe import _, throw, whitelist
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.utils import cint, flt
 from frappe.utils.nestedset import NestedSet
 
 import erpnext
 from erpnext.stock import get_warehouse_account
+from erpnext.accounts.utils import get_company_default
 
 
 class Warehouse(NestedSet):
@@ -245,3 +246,37 @@ def get_warehouses_based_on_account(account, company=None):
 			.format(account))
 
 	return warehouses
+
+@frappe.whitelist()
+def clear_warehouse(warehouse_name):
+	warehouse = frappe.get_doc("Warehouse", warehouse_name)
+	from erpnext.stock.report.stock_balance.stock_balance import execute as stock_balance_report
+	columns, items = stock_balance_report({
+		'from_date': frappe.utils.add_to_date(frappe.utils.now_datetime(), days=-1),
+		'to_date': frappe.utils.now_datetime(),
+		'warehouse': warehouse.name})
+
+	stock_entry = frappe.new_doc("Stock Entry")
+	stock_entry.purpose = "Material Issue"
+	stock_entry.company = warehouse.company
+	stock_entry.from_warehouse = warehouse.name
+	
+	stock_entry.set_stock_entry_type()
+
+	expense_account = get_company_default(warehouse.company, "default_expense_account")
+	for item in items:
+		if(item['bal_qty']>0.0):
+			stock_entry.add_to_stock_entry_detail({
+				item['item_code']: {
+					"from_warehouse": warehouse.name,
+					"to_warehouse": "",
+					"qty": item['bal_qty'],
+					"item_name": "",
+					"description": "",
+					"stock_uom": item['stock_uom'],
+					"expense_account": expense_account,
+					"cost_center": "",
+					"original_item": ""
+				}
+			})
+	return stock_entry.as_dict()

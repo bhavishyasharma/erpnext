@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
+  "work_order_type",
   "naming_series",
   "status",
   "production_item",
@@ -565,6 +566,13 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "work_order_type",
+   "fieldtype": "Select",
+   "label": "Work Order Type",
+   "options": "Part Work Order\nAssembly Work Order\nMachine Work Order",
+   "reqd": 1
   }
  ],
  "icon": "fa fa-cogs",
@@ -572,7 +580,7 @@
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2021-08-24 15:14:03.844937",
+ "modified": "2021-09-20 13:14:44.605796",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Work Order",

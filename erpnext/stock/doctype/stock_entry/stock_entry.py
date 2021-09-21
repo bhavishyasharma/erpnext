@@ -93,7 +93,7 @@ class StockEntry(StockController):
 		self.clean_serial_nos()
 		self.validate_duplicate_serial_no()
 
-		if not self.from_bom:
+		if not self.work_order and not self.from_bom:
 			self.fg_completed_qty = 0.0
 
 		if self._action == 'submit':

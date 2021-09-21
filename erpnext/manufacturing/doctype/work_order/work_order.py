@@ -17,7 +17,10 @@ from frappe.utils import (
 	getdate,
 	nowdate,
 	time_diff_in_hours,
+	add_to_date,
+	now_datetime
 )
+from frappe.utils.data import now
 
 from erpnext.manufacturing.doctype.bom.bom import (
 	get_bom_item_rate,
@@ -37,6 +40,7 @@ from erpnext.stock.doctype.serial_no.serial_no import (
 from erpnext.stock.stock_balance import get_planned_qty, update_bin_qty
 from erpnext.stock.utils import get_bin, get_latest_stock_qty, validate_warehouse_company
 from erpnext.utilities.transaction_base import validate_uom_is_integer
+from erpnext.accounts.utils import get_company_default
 
 
 class OverProductionError(frappe.ValidationError): pass
@@ -947,7 +951,45 @@ def make_stock_entry(work_order_id, purpose, qty=None):
 		stock_entry.project = work_order.project
 
 	stock_entry.set_stock_entry_type()
-	stock_entry.get_items()
+	if work_order.work_order_type == "Machine Work Order":
+		from erpnext.stock.report.stock_balance.stock_balance import execute as stock_balance_report
+		columns, items = stock_balance_report({
+			'from_date': frappe.utils.add_to_date(nowdate(), days=-10),
+			'to_date': frappe.utils.add_to_date(nowdate(), days=0),
+			'warehouse': work_order.wip_warehouse})
+		stock_entry.from_bom = 0
+		expense_account = get_company_default(work_order.company, "default_expense_account")
+		stock_entry.add_to_stock_entry_detail({
+					work_order.production_item: {
+						"from_warehouse": "",
+						"to_warehouse": work_order.fg_warehouse,
+						"qty": work_order.qty,
+						"item_name": "",
+						"description": "",
+						"stock_uom": work_order.stock_uom,
+						"expense_account": expense_account,
+						"cost_center": "",
+						"original_item": ""
+					}
+				})
+		for item in items:
+			if(item['bal_qty']>0.0):
+				stock_entry.add_to_stock_entry_detail({
+						item['item_code']: {
+							"from_warehouse": work_order.wip_warehouse,
+							"to_warehouse": "",
+							"qty": item['bal_qty'],
+							"item_name": "",
+							"description": "",
+							"stock_uom": item['stock_uom'],
+							"expense_account": expense_account,
+							"cost_center": "",
+							"original_item": ""
+						}
+					})
+		stock_entry.pro_doc = work_order
+	else:
+		stock_entry.get_items()
 	stock_entry.set_serial_no_batch_for_finished_good()
 	return stock_entry.as_dict()
 
@@ -987,6 +1029,37 @@ def query_sales_order(production_item):
 	""", (production_item, production_item))
 
 	return out
+@frappe.whitelist()
+def update_item(work_order, new_item):
+	frappe.db.sql("""update `tabWork Order` set production_item = '{item_code}' where name = '{work_order}'""".format(work_order=work_order, item_code=new_item))
+	frappe.db.commit()
+
+@frappe.whitelist()
+def complete_work_order(work_order):
+	if work_order is None:
+		return None
+	jcs = frappe.get_list('Job Card', filters={'work_order': work_order, 'docstatus': 0}, fields=['name', 'docstatus', 'status'], order_by='name')
+	last_time = add_to_date(now_datetime(), minutes=len(jcs)*12)
+	for x in jcs:
+		try:
+			jc = frappe.get_doc('Job Card', x.name)
+			if jc.docstatus == 0 and (jc.status == 'Open' or jc.status == 'Material Transferred'):
+				if len(jc.time_logs) == 0:
+					jc.append('time_logs',{
+						'from_time': last_time,
+						'to_time': add_to_date(last_time, minutes=10),
+						'completed_qty': 1})
+					last_time = add_to_date(last_time, minutes=11)
+				jc.save()
+				jc.submit()
+				frappe.db.commit()
+			if jc.docstatus == 1  and jc.status == 'Work In Progress':
+				frappe.db.sql("""update `tabJob Card` set status = 'Completed' where name = '{job_card}' and status = 'Work In Progress'""".format(job_card=jc.name))
+				frappe.db.commit()
+
+		except Exception:
+			frappe.db.rollback()
+			frappe.throw(_("Error: Cannot close Job Card {0}").format(frappe.utils.get_link_to_form('Job Card', x.name)))
 
 @frappe.whitelist()
 def make_job_card(work_order, operations):

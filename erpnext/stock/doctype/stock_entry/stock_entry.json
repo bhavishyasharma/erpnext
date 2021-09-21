@@ -15,6 +15,7 @@
   "purpose",
   "add_to_transit",
   "work_order",
+  "fg_completed_qty",
   "purchase_order",
   "delivery_note_no",
   "sales_invoice_no",
@@ -44,7 +45,6 @@
   "customer_gstin",
   "sb1",
   "bom_no",
-  "fg_completed_qty",
   "cb1",
   "use_multi_level_bom",
   "get_items",
@@ -93,6 +93,8 @@
    "oldfieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
+   "default": "{purpose}",
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -265,7 +267,7 @@
    "options": "BOM"
   },
   {
-   "depends_on": "from_bom",
+   "depends_on": "eval: doc.work_order || doc.from_bom",
    "description": "As per Stock UOM",
    "fieldname": "fg_completed_qty",
    "fieldtype": "Float",
@@ -362,7 +364,6 @@
   },
   {
    "fieldname": "scan_barcode",
-   "options": "Barcode",
    "fieldtype": "Data",
    "label": "Scan Barcode"
   },
@@ -691,7 +692,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-09-15 21:06:32.510122",
+ "modified": "2021-09-20 11:58:48.705576",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

@@ -108,6 +108,10 @@ frappe.ui.form.on('Stock Entry', {
 			}
 		});
 		attach_bom_items(frm.doc.bom_no);
+
+		cur_frm.add_fetch("supplier_address", "gstin", "supplier_gstin");
+		cur_frm.add_fetch("custom_customer_address", "gstin", "customer_gstin");
+		cur_frm.add_fetch("sales_invoice", "net_total", "sales_invoice_value");
 	},
 
 	setup_quality_inspection: function(frm) {
@@ -321,12 +325,108 @@ frappe.ui.form.on('Stock Entry', {
 
 		frm.trigger("setup_quality_inspection");
 		attach_bom_items(frm.doc.bom_no)
+
+		cur_frm.set_query("custom_customer_address", function() {
+            if(!frm.doc.customer) {
+                frappe.throw('Please set Customer');
+            }
+            return {
+                query: 'frappe.contacts.doctype.address.address.address_query',
+                filters: {
+                    link_doctype: 'Customer',
+                    link_name: frm.doc.customer
+                }
+            };
+        });
+        if(frm.doc.stock_entry_type == 'Return from StandBy') {
+            frm.events.show_standby_outward_entry_button(frm);
+        }
+        else {
+            frm.events.hide_standby_outward_entry_button(frm);
+        }
+        if(frm.doc.stock_entry_type == 'Receive after Repair') {
+            frm.events.show_outward_entry_button(frm);
+        }
+        else {
+            frm.events.hide_outward_entry_button(frm);
+        }
+        if(frm.doc.stock_entry_type == "Issue Against Invoice") {
+            cur_frm.set_query("sales_invoice", function() {
+                if(!frm.doc.customer) {
+                    frappe.throw('Please set Customer');
+                }
+                return {
+                    filters: {
+                        customer: frm.doc.customer
+                    }
+                };
+            });
+        }
 	},
+
+	validate: function(frm) {
+        let expense_account = 'Cost of Goods Sold - BST';
+        if(['Issue Under Warranty', 'Receive Under Warranty'].includes(frm.doc.stock_entry_type)){
+            expense_account = 'Warranty Expenses - BST';
+            if(frm.doc.stock_entry_type == "Receive Under Warranty"){
+                $.each(frm.doc.items|| [], function(i, v) {
+                    if(v.t_warehouse == "Scrap Warehouse - BST") {
+                        frappe.model.set_value(v.doctype, v.name, "basic_rate", 0.01);
+                        frappe.model.set_value(v.doctype, v.name, "valuation_rate", 0.01);
+                    }
+                });
+            }
+        }
+        else if(['Receive for Repair', 'Send after Repair'].includes(frm.doc.stock_entry_type)){
+            expense_account = 'Stock Received for Repair - BST';
+            if(frm.doc.stock_entry_type == 'Send after Repair'){
+                frm.events.verify_inward_entry(frm);
+            }
+        }
+        else if(['Issue for StandBy', 'Return from StandBy'].includes(frm.doc.stock_entry_type)){
+            expense_account = 'Stock Received for Repair - BST';
+            if(frm.doc.stock_entry_type == 'Return from StandBy'){
+                frm.events.verify_standby_outward_entry(frm);
+            }
+        }
+        else if(['Send for Repair', 'Receive after Repair'].includes(frm.doc.stock_entry_type)){
+            if(frm.doc.stock_entry_type == 'Receive after Repair'){
+                frm.events.verify_outward_entry(frm);
+            }
+        }
+        if(frm.doc.customer) {
+            $.each(frm.doc.items|| [], function(i, v) {
+                frm.events.set_selling_price(frm, "Stock Entry Detail", v.name);
+            });
+        }
+        frm.events.update_expense_account(frm, expense_account);
+    },
 
 	stock_entry_type: function(frm){
 		frm.remove_custom_button('Bill of Materials', "Get Items From");
 		frm.events.show_bom_custom_button(frm);
 		frm.trigger('add_to_transit');
+		if(['Issue for StandBy', 'Return from StandBy', 'Receive for Repair', 'Send after Repair', 'Issue Under Warranty', 'Receive Under Warranty', 'Send for Repair', 'Receive after Repair'].includes(frm.doc.stock_entry_type) && !frm.doc.customer){
+            frm.set_df_property('items', 'hidden', 1);
+        }
+        if(frm.doc.stock_entry_type == 'Send after Repair') {
+            frm.events.show_inward_entry_button(frm);
+        }
+        else {
+            frm.events.hide_inward_entry_button(frm);
+        }
+        if(frm.doc.stock_entry_type == 'Return from StandBy') {
+            frm.events.show_standby_outward_entry_button(frm);
+        }
+        else {
+            frm.events.hide_standby_outward_entry_button(frm);
+        }
+        if(frm.doc.stock_entry_type == 'Receive after Repair') {
+            frm.events.show_outward_entry_button(frm);
+        }
+        else {
+            frm.events.hide_outward_entry_button(frm);
+        }
 	},
 
 	purpose: function(frm) {
@@ -636,7 +736,279 @@ frappe.ui.form.on('Stock Entry', {
 
 	apply_putaway_rule: function (frm) {
 		if (frm.doc.apply_putaway_rule) erpnext.apply_putaway_rule(frm, frm.doc.purpose);
-	}
+	},
+
+	customer: function(frm) {
+        if(frm.doc.customer){
+            frm.set_df_property('items', 'hidden', 0);
+            if(frm.doc.stock_entry_type == "Send after Repair") {
+                frm.doc.items = [];
+                frm.refresh_field('items'); 
+            }
+        }
+        else {
+            frm.set_df_property('items', 'hidden', 1);
+        }
+    },
+
+	supplier: function(frm) {
+        if(frm.doc.supplier){
+            frm.set_df_property('items', 'hidden', 0);
+            if(frm.doc.stock_entry_type == "Receive after Repair") {
+                frm.doc.items = [];
+                frm.refresh_field('items'); 
+            }
+        }
+        else {
+            frm.set_df_property('items', 'hidden', 1);
+        }
+    },
+
+	custom_customer_address: function(frm) {
+        frappe.call({
+            method: "frappe.contacts.doctype.address.address.get_address_display",
+            args: {"address_dict": frm.doc.custom_customer_address },
+            callback: function(r) {
+                if(r.message) {
+                    cur_frm.set_value("customer_address_display", r.message);
+                    refresh_field("customer_address_display");
+                }
+	        }
+        });
+    },
+
+	set_selling_price: function(frm, cdt, cdn) {
+        var item = JSON.parse(JSON.stringify(locals[cdt][cdn]));
+        if(item){
+            item.company = frm.doc.company;
+            item.customer = frm.doc.customer;
+            item.conversion_rate = 1;
+            item.price_list = "Standard Selling";
+            item.currency = "INR";
+            item.price_list_currency = "INR";
+            item.plc_conversion_rate = 1;
+            item.doctype = "Sales Order";
+            frappe.call({
+                method:"erpnext.stock.get_item_details.get_item_details",
+                args: {args: item}, 
+                callback: function(r) { 
+                    $.each(frm.doc.items|| [], function(i, v) {
+                        if ( item.item_code == v.item_code ) {
+                            frappe.model.set_value(v.doctype, v.name, "selling_rate", r.message.price_list_rate);
+                            frappe.model.set_value(v.doctype, v.name, "selling_amount", v.selling_rate*v.qty);
+                        }
+                    });
+                    frm.refresh_field('items');            
+                }
+            });
+        }
+    },
+
+	update_expense_account: function(frm, account) {
+        $.each(frm.doc.items|| [], function(i, v) {
+            frappe.model.set_value(v.doctype, v.name, "expense_account", account);
+        });
+        frm.refresh_field('items');
+    },
+
+	show_inward_entry_button: function(frm) {
+        frm.add_custom_button(__("Inward Stock Entry"), function(){
+            if(!frm.doc.customer){
+                frappe.throw('Please set Customer');
+            }
+            var dialog = new frappe.ui.form.MultiSelectDialog({
+                doctype: "Stock Entry",
+                target: frm,
+                setters: {},
+                date_field: "posting_date",
+                get_query() {
+                    return {
+                        filters: { 
+                            docstatus: ['!=', 2],
+                            stock_entry_type: ['=', 'Receive for Repair'],
+                            customer: ['=', frm.doc.customer]
+                        }
+                    };
+                },
+                action(selections) {
+                    $.each(selections, function(i, v) {
+                        frappe.call({
+                            method: "frappe.client.get",
+                            args: {
+                                doctype: "Stock Entry",
+                                name: v,
+                            },
+                            callback(r) {
+                                if(r.message) {
+                                    var ste = r.message;
+                                    $.each(ste.items, function(i,v) {
+                                        let d = frm.add_child("items");
+                                        d.item_code = v.item_code;
+                                        d.qty = v.qty;
+                                        d.against_stock_entry = ste.name;
+                                        d.ste_detail = v.name;
+                                        d.uom = v.uom;
+                                        d.conversion_factor = v.conversion_factor;
+                                        d.transfer_qty = v.transfer_qty;
+                                    });
+                                    frm.refresh_fields();
+                                }
+                            }
+                        });
+                    });
+                    dialog.dialog.hide();
+                }
+            });
+        }, __("Get Items From"));
+    },
+
+	hide_inward_entry_button: function(frm) {
+        frm.remove_custom_button("Inward Stock Entry", 'Get Items From');
+    },
+
+	show_standby_outward_entry_button: function(frm) {
+        frm.add_custom_button(__("Stand By Outward Stock Entry"), function(){
+            if(!frm.doc.customer){
+                frappe.throw('Please set Customer');
+            }
+            var dialog = new frappe.ui.form.MultiSelectDialog({
+                doctype: "Stock Entry",
+                target: frm,
+                setters: {},
+                date_field: "posting_date",
+                get_query() {
+                    return {
+                        filters: { 
+                            docstatus: ['!=', 2],
+                            stock_entry_type: ['=', 'Issue for StandBy'],
+                            customer: ['=', frm.doc.customer]
+                        }
+                    };
+                },
+                action(selections) {
+                    $.each(selections, function(i, v) {
+                        frappe.call({
+                            method: "frappe.client.get",
+                            args: {
+                                doctype: "Stock Entry",
+                                name: v,
+                            },
+                            callback(r) {
+                                if(r.message) {
+                                    var ste = r.message;
+                                    $.each(ste.items, function(i,v) {
+                                        let d = frm.add_child("items");
+                                        d.item_code = v.item_code;
+                                        d.qty = v.qty;
+                                        d.against_stock_entry = ste.name;
+                                        d.ste_detail = v.name;
+                                        d.uom = v.uom;
+                                        d.conversion_factor = v.conversion_factor;
+                                        d.transfer_qty = v.transfer_qty;
+                                    });
+                                    frm.refresh_fields();
+                                }
+                            }
+                        });
+                    });
+                    dialog.dialog.hide();
+                }
+            });
+        }, __("Get Items From"));
+    },
+
+	hide_standby_outward_entry_button: function(frm) {
+        if(frm.doc.stock_entry_type !== "Return from StandBy"){
+            frm.remove_custom_button("Stand By Outward Stock Entry", 'Get Items From');
+        }
+    },
+
+	show_outward_entry_button: function(frm) {
+        frm.add_custom_button(__("Outward Stock Entry"), function(){
+            if(!frm.doc.supplier){
+                frappe.throw('Please set Supplier');
+            }
+            var dialog = new frappe.ui.form.MultiSelectDialog({
+                doctype: "Stock Entry",
+                target: frm,
+                setters: {},
+                date_field: "posting_date",
+                get_query() {
+                    return {
+                        filters: { 
+                            docstatus: ['!=', 2],
+                            stock_entry_type: ['=', 'Send for Repair'],
+                            supplier: ['=', frm.doc.supplier]
+                        }
+                    };
+                },
+                action(selections) {
+                    $.each(selections, function(i, v) {
+                        frappe.call({
+                            method: "frappe.client.get",
+                            args: {
+                                doctype: "Stock Entry",
+                                name: v,
+                            },
+                            callback(r) {
+                                if(r.message) {
+                                    var ste = r.message;
+                                    $.each(ste.items, function(i,v) {
+                                        let d = frm.add_child("items");
+                                        d.item_code = v.item_code;
+                                        d.qty = v.qty;
+                                        d.against_stock_entry = ste.name;
+                                        d.ste_detail = v.name;
+                                        d.uom = v.uom;
+                                        d.conversion_factor = v.conversion_factor;
+                                        d.transfer_qty = v.transfer_qty;
+                                    });
+                                    frm.refresh_fields();
+                                }
+                            }
+                        });
+                    });
+                    dialog.dialog.hide();
+                }
+            });
+        }, __("Get Items From"));
+    },
+
+	hide_outward_entry_button: function(frm) {
+        if(frm.doc.stock_entry_type !== "Receive after Repair"){
+            frm.remove_custom_button("Outward Stock Entry", 'Get Items From');
+        }
+    },
+
+	verify_inward_entry: function(frm) {
+        $.each(frm.doc.items|| [], function(i, item) {
+            if(!item.against_stock_entry || !item.ste_detail) {
+                frappe.msgprint(__("Receive for Repair Entry missing for Item: "+item.item_code));
+                frappe.validated = false;
+                return false;
+            }
+        });
+    },
+
+	verify_standby_outward_entry: function(frm) {
+        $.each(frm.doc.items|| [], function(i, item) {
+            if(!item.against_stock_entry || !item.ste_detail) {
+                frappe.msgprint(__("Issue for StandBy Entry missing for Item: "+item.item_code));
+                frappe.validated = false;
+                return false;
+            }
+        });
+    },
+
+	verify_outward_entry: function(frm) {
+        $.each(frm.doc.items|| [], function(i, item) {
+            if(!item.against_stock_entry || !item.ste_detail) {
+                frappe.msgprint(__("Send for Repair Entry missing for Item: "+item.item_code));
+                frappe.validated = false;
+                return false;
+            }
+        });
+    }
 });
 
 frappe.ui.form.on('Stock Entry Detail', {
@@ -644,6 +1016,12 @@ frappe.ui.form.on('Stock Entry Detail', {
 		frm.events.set_serial_no(frm, cdt, cdn, () => {
 			frm.events.set_basic_rate(frm, cdt, cdn);
 		});
+		if(['Issue for StandBy', 'Return from StandBy', 'Receive for Repair', 'Send after Repair', 'Issue Under Warranty', 'Receive Under Warranty'].includes(frm.doc.stock_entry_type)){
+            if(!frm.doc.customer) {
+                frappe.throw('Please set Customer');
+            }
+            frm.events.set_selling_price(frm, cdt, cdn);
+        }
 	},
 
 	conversion_factor: function(frm, cdt, cdn) {
@@ -744,6 +1122,12 @@ frappe.ui.form.on('Stock Entry Detail', {
 				}
 			});
 		}
+		if(['Issue for StandBy', 'Return from StandBy', 'Receive for Repair', 'Send after Repair', 'Issue Under Warranty', 'Receive Under Warranty'].includes(frm.doc.stock_entry_type)){
+            if(!frm.doc.customer) {
+                frappe.throw('Please set Customer');
+            }
+            frm.events.set_selling_price(frm, cdt, cdn);
+        }
 	},
 	expense_account: function(frm, cdt, cdn) {
 		erpnext.utils.copy_value_in_all_rows(frm.doc, cdt, cdn, "items", "expense_account");
@@ -913,7 +1297,7 @@ erpnext.stock.StockEntry = erpnext.stock.StockController.extend({
 	},
 
 	fg_completed_qty: function() {
-		this.get_items();
+		//this.get_items();
 	},
 
 	get_items: function() {

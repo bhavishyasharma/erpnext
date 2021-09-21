@@ -6,7 +6,9 @@ frappe.ui.form.on("Work Order", {
 		frm.custom_make_buttons = {
 			'Stock Entry': 'Start',
 			'Pick List': 'Create Pick List',
-			'Job Card': 'Create Job Card'
+			'Job Card': 'Create Job Card',
+			'Complete Work Order': 'Complete Work Order',
+			'Update Item': 'Update Item'
 		};
 
 		// Set query for warehouses
@@ -153,7 +155,13 @@ frappe.ui.form.on("Work Order", {
 				frm.add_custom_button(__('Create Job Card'), () => {
 					frm.trigger("make_job_card");
 				}).addClass('btn-primary');
+				frm.add_custom_button(__('Complete Work Order'), () => {
+					frm.trigger("complete_work_order");
+				}).addClass('btn-warning');
 			}
+			frm.add_custom_button(__('Update Item'), () => {
+				frm.trigger("update_item");
+			}).addClass('btn-danger');
 		}
 
 		if(frm.doc.required_items && frm.doc.allow_alternative_item) {
@@ -180,6 +188,51 @@ frappe.ui.form.on("Work Order", {
 				frm.trigger("make_bom");
 			});
 		}
+	},
+
+	update_item: function(frm) {
+		const fields = [{
+			fieldname: 'item_code',
+			fieldtype: 'Link',
+			label: __('Production Item'),
+			default: frm.doc.production_item,
+			options: "Item",
+			get_query: function () {
+				return {
+					filters: {
+						is_stock_item: 1
+					}
+				};
+			},
+		}];
+
+		frappe.prompt(fields, data => {
+			frappe.call({
+				method: "erpnext.manufacturing.doctype.work_order.work_order.update_item",
+				freeze: true,
+				args: {
+					work_order: frm.doc.name,
+					new_item: data.item_code
+				},
+				callback: function() {
+					frm.reload_doc();
+				}
+			});
+		}, __('Select new Item'), __('Update Item'));
+		
+	},
+
+	complete_work_order: function(frm) {
+		frappe.call({
+			method: "erpnext.manufacturing.doctype.work_order.work_order.complete_work_order",
+			freeze: true,
+			args: {
+				work_order: frm.doc.name,
+			},
+			callback: function() {
+				frm.reload_doc();
+			}
+		});
 	},
 
 	make_job_card: function(frm) {
