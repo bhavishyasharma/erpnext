@@ -242,3 +242,7 @@ def get_dimensions(with_cost_center_and_project=False):
 		default_dimensions_map[dimension.company][dimension.fieldname] = dimension.default_dimension
 
 	return dimension_filters, default_dimensions_map
+
+@frappe.whitelist()
+def get_dimension_filters(with_cost_center_and_project=False):
+    return get_dimensions(with_cost_center_and_project)

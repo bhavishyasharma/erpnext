@@ -231,6 +231,33 @@
    "type": "Link"
   },
   {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Pending Customer Material for Repair",
+   "link_to": "Pending Customer Material for Repair",
+   "link_type": "Report",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Pending Stand By Material",
+   "link_to": "Pending Stand By Material",
+   "link_type": "Report",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Pending Material for Repair at Supplier",
+   "link_to": "Pending Material for Repair at Supplier",
+   "link_type": "Report",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
    "dependencies": "Item",
    "hidden": 0,
    "is_query_report": 0,
@@ -691,7 +718,7 @@
    "type": "Link"
   }
  ],
- "modified": "2021-05-13 13:10:24.914983",
+ "modified": "2021-09-28 21:54:20.191673",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock",

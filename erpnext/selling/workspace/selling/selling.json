@@ -16,6 +16,7 @@
  "hide_custom": 1,
  "icon": "sell",
  "idx": 0,
+ "is_default": 0,
  "is_standard": 1,
  "label": "Selling",
  "links": [
@@ -189,6 +190,50 @@
    "is_query_report": 0,
    "label": "Coupon Code",
    "link_to": "Coupon Code",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Competition Comparison",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Competition Comparison",
+   "link_to": "Competition Comparison",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Competitor Brand",
+   "link_to": "Competitor Brand",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Competitor Series",
+   "link_to": "Competitor Series",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Competitor Model",
+   "link_to": "Competitor Model",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -515,7 +560,7 @@
    "type": "Link"
   }
  ],
- "modified": "2020-12-01 13:38:35.971277",
+ "modified": "2021-09-28 22:01:09.915117",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Selling",
