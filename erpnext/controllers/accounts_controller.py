@@ -1979,6 +1979,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			child_item = frappe.get_doc(parent_doctype + ' Item', d.get("docname"))
 
 			prev_rate, new_rate = flt(child_item.get("rate")), flt(d.get("rate"))
+			if prev_rate != new_rate and (parent_doctype == 'Purchase Order' and 'Purchase Manager' not in frappe.get_roles(frappe.session.user)) or (parent_doctype == 'Sales Order' and 'Sales Manager' not in frappe.get_roles(frappe.session.user)):
+				frappe.throw(_('Insufficient Permission: You don\'t have permission to update item price.'))
 			prev_qty, new_qty = flt(child_item.get("qty")), flt(d.get("qty"))
 			prev_con_fac, new_con_fac = flt(child_item.get("conversion_factor")), flt(d.get("conversion_factor"))
 			prev_uom, new_uom = child_item.get("uom"), d.get("uom")
