@@ -20,6 +20,7 @@ from frappe.utils import (
 	getdate,
 	money_in_words,
 	rounded,
+	ceil,
 )
 from frappe.utils.background_jobs import enqueue
 from six import iteritems
@@ -945,7 +946,7 @@ class SalarySlip(TransactionBase):
 
 		# apply rounding
 		if frappe.get_cached_value("Salary Component", row.salary_component, "round_to_the_nearest_integer"):
-			amount, additional_amount = rounded(amount), rounded(additional_amount)
+			amount, additional_amount = ceil(amount), ceil(additional_amount)
 
 		return amount, additional_amount
 
