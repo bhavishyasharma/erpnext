@@ -65,9 +65,9 @@ class JobCard(Document):
 					frappe.throw(_("Row {0}: From time must be less than to time").format(d.idx))
 
 				data = self.get_overlap_for(d)
-				if data:
-					frappe.throw(_("Row {0}: From Time and To Time of {1} is overlapping with {2}")
-						.format(d.idx, self.name, data.name), OverlapError)
+				#if data:
+				#	frappe.throw(_("Row {0}: From Time and To Time of {1} is overlapping with {2}")
+				#		.format(d.idx, self.name, data.name), OverlapError)
 
 				if d.from_time and d.to_time:
 					d.time_in_mins = time_diff_in_hours(d.to_time, d.from_time) * 60
