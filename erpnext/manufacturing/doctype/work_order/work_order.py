@@ -1043,8 +1043,8 @@ def complete_work_order(work_order):
 	for x in jcs:
 		try:
 			jc = frappe.get_doc('Job Card', x.name)
-			if jc.docstatus == 0 and (jc.status == 'Open' or jc.status == 'Material Transferred'):
-				if len(jc.time_logs) == 0:
+			if jc.docstatus == 0 and (jc.status == 'Open' or jc.status == 'Material Transferred' or jc.status == 'Work In Progress'):
+				if len(jc.time_logs) == 0 or jc.time_logs[0].completed_qty == 0:
 					jc.append('time_logs',{
 						'from_time': last_time,
 						'to_time': add_to_date(last_time, minutes=10),
