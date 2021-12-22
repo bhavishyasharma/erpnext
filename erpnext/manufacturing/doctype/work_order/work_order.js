@@ -152,17 +152,18 @@ frappe.ui.form.on("Work Order", {
 					}
 				});
 
-			if(not_completed && not_completed.length) {
-				frm.add_custom_button(__('Create Job Card'), () => {
-					frm.trigger("make_job_card");
-				}).addClass('btn-primary');
-				frm.add_custom_button(__('Complete Work Order'), () => {
-					frm.trigger("complete_work_order");
-				}).addClass('btn-warning');
+				if(not_completed && not_completed.length) {
+					frm.add_custom_button(__('Create Job Card'), () => {
+						frm.trigger("make_job_card");
+					}).addClass('btn-primary');
+					frm.add_custom_button(__('Complete Work Order'), () => {
+						frm.trigger("complete_work_order");
+					}).addClass('btn-warning');
+				}
+				frm.add_custom_button(__('Update Item'), () => {
+					frm.trigger("update_item");
+				}).addClass('btn-danger');
 			}
-			frm.add_custom_button(__('Update Item'), () => {
-				frm.trigger("update_item");
-			}).addClass('btn-danger');
 		}
 
 		if(frm.doc.required_items && frm.doc.allow_alternative_item) {
