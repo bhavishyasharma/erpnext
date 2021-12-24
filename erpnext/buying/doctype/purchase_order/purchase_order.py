@@ -78,6 +78,7 @@ class PurchaseOrder(BuyingController):
 		make_packing_list(self)
 		self.calculate_packing_list_rates()
 		validate_inter_company_party(self.doctype, self.supplier, self.company, self.inter_company_order_reference)
+		self.reset_default_field_value("set_warehouse", "items", "warehouse")
 
 	def validate_with_previous_doc(self):
 		super(PurchaseOrder, self).validate_with_previous_doc({
