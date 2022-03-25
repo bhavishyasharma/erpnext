@@ -33,6 +33,7 @@ from erpnext.accounts.utils import get_account_currency, get_fiscal_year
 from erpnext.assets.doctype.asset.asset import get_asset_account, is_cwip_accounting_enabled
 from erpnext.assets.doctype.asset_category.asset_category import get_asset_category_account
 from erpnext.buying.utils import check_on_hold_or_closed_status
+from erpnext.controllers.accounts_controller import validate_account_head
 from erpnext.controllers.buying_controller import BuyingController
 from erpnext.stock import get_warehouse_account_map
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
@@ -105,6 +106,7 @@ class PurchaseInvoice(BuyingController):
 		self.validate_uom_is_integer("uom", "qty")
 		self.validate_uom_is_integer("stock_uom", "stock_qty")
 		self.set_expense_account(for_validate=True)
+		self.validate_expense_account()
 		self.set_against_expense_account()
 		self.validate_write_off_account()
 		self.validate_multiple_billing("Purchase Receipt", "pr_detail", "amount", "items")
@@ -177,8 +179,8 @@ class PurchaseInvoice(BuyingController):
 
 		if self.supplier and account.account_type != "Payable":
 			frappe.throw(
-				_("Please ensure {} account is a Payable account. Change the account type to Payable or select a different account.")
-				.format(frappe.bold("Credit To")), title=_("Invalid Account")
+				_("Please ensure {} account {} is a Payable account. Change the account type to Payable or select a different account.")
+				.format(frappe.bold("Credit To"), frappe.bold(self.credit_to)), title=_("Invalid Account")
 			)
 
 		self.party_account_currency = account.account_currency
@@ -309,6 +311,10 @@ class PurchaseInvoice(BuyingController):
 				item.expense_account = asset_received_but_not_billed
 			elif not item.expense_account and for_validate:
 				throw(_("Expense account is mandatory for item {0}").format(item.item_code or item.item_name))
+
+	def validate_expense_account(self):
+		for item in self.get('items'):
+			validate_account_head(item.idx, item.expense_account, self.company, 'Expense')
 
 	def set_against_expense_account(self):
 		against_accounts = []
@@ -536,13 +542,21 @@ class PurchaseInvoice(BuyingController):
 
 		voucher_wise_stock_value = {}
 		if self.update_stock:
-			for d in frappe.get_all('Stock Ledger Entry',
-				fields = ["voucher_detail_no", "stock_value_difference", "warehouse"], filters={'voucher_no': self.name}):
+			stock_ledger_entries = frappe.get_all("Stock Ledger Entry",
+				fields = ["voucher_detail_no", "stock_value_difference", "warehouse"],
+				filters={"voucher_no": self.name, "voucher_type": self.doctype, "is_cancelled": 0}
+			)
+			for d in stock_ledger_entries:
 				voucher_wise_stock_value.setdefault((d.voucher_detail_no, d.warehouse), d.stock_value_difference)
 
 		valuation_tax_accounts = [d.account_head for d in self.get("taxes")
 			if d.category in ('Valuation', 'Total and Valuation')
 			and flt(d.base_tax_amount_after_discount_amount)]
+
+		provisional_accounting_for_non_stock_items = cint(frappe.db.get_value('Company', self.company,
+			'enable_provisional_accounting_for_non_stock_items'))
+
+		purchase_receipt_doc_map = {}
 
 		for item in self.get("items"):
 			if flt(item.base_net_amount):
@@ -638,19 +652,23 @@ class PurchaseInvoice(BuyingController):
 					else:
 						amount = flt(item.base_net_amount + item.item_tax_amount, item.precision("base_net_amount"))
 
-					auto_accounting_for_non_stock_items = cint(frappe.db.get_value('Company', self.company, 'enable_perpetual_inventory_for_non_stock_items'))
-
-					if auto_accounting_for_non_stock_items:
-						service_received_but_not_billed_account = self.get_company_default("service_received_but_not_billed")
-
+					if provisional_accounting_for_non_stock_items:
 						if item.purchase_receipt:
+							provisional_account = self.get_company_default("default_provisional_account")
+							purchase_receipt_doc = purchase_receipt_doc_map.get(item.purchase_receipt)
+
+							if not purchase_receipt_doc:
+								purchase_receipt_doc = frappe.get_doc("Purchase Receipt", item.purchase_receipt)
+								purchase_receipt_doc_map[item.purchase_receipt] = purchase_receipt_doc
+
 							# Post reverse entry for Stock-Received-But-Not-Billed if it is booked in Purchase Receipt
 							expense_booked_in_pr = frappe.db.get_value('GL Entry', {'is_cancelled': 0,
 								'voucher_type': 'Purchase Receipt', 'voucher_no': item.purchase_receipt, 'voucher_detail_no': item.pr_detail,
-								'account':service_received_but_not_billed_account}, ['name'])
+								'account':provisional_account}, ['name'])
 
 							if expense_booked_in_pr:
-								expense_account = service_received_but_not_billed_account
+								# Intentionally passing purchase invoice item to handle partial billing
+								purchase_receipt_doc.add_provisional_gl_entry(item, gl_entries, self.posting_date, reverse=1)
 
 					if not self.is_internal_transfer():
 						gl_entries.append(self.get_gl_dict({

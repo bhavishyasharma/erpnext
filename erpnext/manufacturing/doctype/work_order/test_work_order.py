@@ -2,6 +2,7 @@
 # License: GNU General Public License v3. See license.txt
 
 import frappe
+from frappe.tests.utils import FrappeTestCase, change_settings, timeout
 from frappe.utils import add_days, add_months, cint, flt, now, today
 
 from erpnext.manufacturing.doctype.job_card.job_card import JobCardCancelError
@@ -21,10 +22,9 @@ from erpnext.stock.doctype.item.test_item import create_item, make_item
 from erpnext.stock.doctype.stock_entry import test_stock_entry
 from erpnext.stock.doctype.warehouse.test_warehouse import create_warehouse
 from erpnext.stock.utils import get_bin
-from erpnext.tests.utils import ERPNextTestCase, timeout
 
 
-class TestWorkOrder(ERPNextTestCase):
+class TestWorkOrder(FrappeTestCase):
 	def setUp(self):
 		self.warehouse = '_Test Warehouse 2 - _TC'
 		self.item = '_Test Item'
@@ -197,6 +197,21 @@ class TestWorkOrder(ERPNextTestCase):
 		# no change in reserved / projected
 		self.assertEqual(cint(bin1_on_end_production.reserved_qty_for_production),
 			cint(bin1_on_start_production.reserved_qty_for_production))
+
+	def test_reserved_qty_for_production_closed(self):
+
+		wo1 = make_wo_order_test_record(item="_Test FG Item", qty=2,
+			source_warehouse=self.warehouse)
+		item = wo1.required_items[0].item_code
+		bin_before = get_bin(item, self.warehouse)
+		bin_before.update_reserved_qty_for_production()
+
+		make_wo_order_test_record(item="_Test FG Item", qty=2,
+			source_warehouse=self.warehouse)
+		close_work_order(wo1.name, "Closed")
+
+		bin_after = get_bin(item, self.warehouse)
+		self.assertEqual(bin_before.reserved_qty_for_production, bin_after.reserved_qty_for_production)
 
 	def test_backflush_qty_for_overpduction_manufacture(self):
 		cancel_stock_entry = []
@@ -700,7 +715,8 @@ class TestWorkOrder(ERPNextTestCase):
 		wo = make_wo_order_test_record(item=item_name, qty=1, source_warehouse=source_warehouse,
 			company=company)
 
-		self.assertRaises(frappe.ValidationError, make_stock_entry, wo.name, 'Material Transfer for Manufacture')
+		stock_entry = frappe.get_doc(make_stock_entry(wo.name, 'Material Transfer for Manufacture'))
+		self.assertRaises(frappe.ValidationError, stock_entry.save)
 
 	def test_wo_completion_with_pl_bom(self):
 		from erpnext.manufacturing.doctype.bom.test_bom import (
@@ -869,6 +885,79 @@ class TestWorkOrder(ERPNextTestCase):
 
 			close_work_order(wo_order, "Closed")
 			self.assertEqual(wo_order.get('status'), "Closed")
+
+	def test_partial_manufacture_entries(self):
+		cancel_stock_entry = []
+
+		frappe.db.set_value("Manufacturing Settings", None,
+			"backflush_raw_materials_based_on", "Material Transferred for Manufacture")
+
+		wo_order = make_wo_order_test_record(planned_start_date=now(), qty=100)
+		ste1 = test_stock_entry.make_stock_entry(item_code="_Test Item",
+			target="_Test Warehouse - _TC", qty=120, basic_rate=5000.0)
+
+		ste2 = test_stock_entry.make_stock_entry(item_code="_Test Item Home Desktop 100",
+			target="_Test Warehouse - _TC", qty=240, basic_rate=1000.0)
+
+		cancel_stock_entry.extend([ste1.name, ste2.name])
+
+		sm = frappe.get_doc(make_stock_entry(wo_order.name, "Material Transfer for Manufacture", 100))
+		for row in sm.get('items'):
+			if row.get('item_code') == '_Test Item':
+				row.qty = 110
+
+		sm.submit()
+		cancel_stock_entry.append(sm.name)
+
+		s = frappe.get_doc(make_stock_entry(wo_order.name, "Manufacture", 90))
+		for row in s.get('items'):
+			if row.get('item_code') == '_Test Item':
+				self.assertEqual(row.get('qty'), 100)
+
+		s.submit()
+		cancel_stock_entry.append(s.name)
+
+		s1 = frappe.get_doc(make_stock_entry(wo_order.name, "Manufacture", 5))
+		for row in s1.get('items'):
+			if row.get('item_code') == '_Test Item':
+				self.assertEqual(row.get('qty'), 5)
+		s1.submit()
+		cancel_stock_entry.append(s1.name)
+
+		s2 = frappe.get_doc(make_stock_entry(wo_order.name, "Manufacture", 5))
+		for row in s2.get('items'):
+			if row.get('item_code') == '_Test Item':
+				self.assertEqual(row.get('qty'), 5)
+
+		cancel_stock_entry.reverse()
+		for ste in cancel_stock_entry:
+			doc = frappe.get_doc("Stock Entry", ste)
+			doc.cancel()
+
+		frappe.db.set_value("Manufacturing Settings", None,
+			"backflush_raw_materials_based_on", "BOM")
+
+	@change_settings("Manufacturing Settings", {"make_serial_no_batch_from_work_order": 1})
+	def test_auto_batch_creation(self):
+		from erpnext.manufacturing.doctype.bom.test_bom import create_nested_bom
+
+		fg_item = frappe.generate_hash(length=20)
+		child_item = frappe.generate_hash(length=20)
+
+		bom_tree =  {fg_item: {child_item: {}}}
+
+		create_nested_bom(bom_tree, prefix="")
+
+		item = frappe.get_doc("Item", fg_item)
+		item.has_batch_no = 1
+		item.create_new_batch = 0
+		item.save()
+
+		try:
+			make_wo_order_test_record(item=fg_item)
+		except frappe.MandatoryError:
+			self.fail("Batch generation causing failing in Work Order")
+
 
 def update_job_card(job_card, jc_qty=None):
 	employee = frappe.db.get_value('Employee', {'status': 'Active'}, 'name')

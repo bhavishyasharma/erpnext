@@ -8,7 +8,6 @@
  "engine": "InnoDB",
  "field_order": [
   "items_section",
-  "title",
   "naming_series",
   "stock_entry_type",
   "outgoing_stock_entry",
@@ -365,7 +364,8 @@
   {
    "fieldname": "scan_barcode",
    "fieldtype": "Data",
-   "label": "Scan Barcode"
+   "label": "Scan Barcode",
+   "options": "Barcode"
   },
   {
    "allow_bulk_edit": 1,
@@ -692,10 +692,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-09-20 11:58:48.705576",
+ "modified": "2022-02-07 12:55:14.614077",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -762,6 +763,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "title",
+ "states": [],
+ "title_field": "stock_entry_type",
  "track_changes": 1
 }

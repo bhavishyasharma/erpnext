@@ -411,6 +411,22 @@ class AccountsController(TransactionBase):
 								if item_qty != len(get_serial_nos(item.get('serial_no'))):
 									item.set(fieldname, value)
 
+							elif (
+								ret.get("pricing_rule_removed")
+								and value is not None
+								and fieldname
+								in [
+									"discount_percentage",
+									"discount_amount",
+									"rate",
+									"margin_rate_or_amount",
+									"margin_type",
+									"remove_free_item",
+								]
+							):
+								# reset pricing rule fields if pricing_rule_removed
+								item.set(fieldname, value)
+
 					if self.doctype in ["Purchase Invoice", "Sales Invoice"] and item.meta.get_field('is_fixed_asset'):
 						item.set('is_fixed_asset', ret.get('is_fixed_asset', 0))
 
@@ -1322,6 +1338,9 @@ class AccountsController(TransactionBase):
 				payment_schedule['discount_type'] = schedule.discount_type
 				payment_schedule['discount'] = schedule.discount
 
+			if not schedule.invoice_portion:
+				payment_schedule['payment_amount'] = schedule.payment_amount
+
 			self.append("payment_schedule", payment_schedule)
 
 	def set_due_date(self):
@@ -1551,13 +1570,12 @@ def validate_taxes_and_charges(tax):
 		tax.rate = None
 
 
-def validate_account_head(tax, doc):
-	company = frappe.get_cached_value('Account',
-		tax.account_head, 'company')
+def validate_account_head(idx, account, company, context=''):
+	account_company = frappe.get_cached_value('Account', account, 'company')
 
-	if company != doc.company:
-		frappe.throw(_('Row {0}: Account {1} does not belong to Company {2}')
-			.format(tax.idx, frappe.bold(tax.account_head), frappe.bold(doc.company)), title=_('Invalid Account'))
+	if account_company != company:
+		frappe.throw(_('Row {0}: {3} Account {1} does not belong to Company {2}')
+			.format(idx, frappe.bold(account), frappe.bold(company), context), title=_('Invalid Account'))
 
 
 def validate_cost_center(tax, doc):
@@ -1940,7 +1958,8 @@ def update_bin_on_delete(row, doctype):
 
 		qty_dict["ordered_qty"] = get_ordered_qty(row.item_code, row.warehouse)
 
-	update_bin_qty(row.item_code, row.warehouse, qty_dict)
+	if row.warehouse:
+		update_bin_qty(row.item_code, row.warehouse, qty_dict)
 
 def validate_and_delete_children(parent, data):
 	deleted_children = []

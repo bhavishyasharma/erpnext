@@ -77,7 +77,6 @@ class StockEntry(StockController):
 
 		self.validate_posting_time()
 		self.validate_purpose()
-		self.set_title()
 		self.validate_item()
 		self.validate_customer_provided_item()
 		self.validate_qty()
@@ -1118,7 +1117,7 @@ class StockEntry(StockController):
 		self.set_actual_qty()
 		self.update_items_for_process_loss()
 		self.validate_customer_provided_item()
-		self.calculate_rate_and_amount()
+		self.calculate_rate_and_amount(raise_error_if_no_rate=False)
 
 	def set_scrap_items(self):
 		if self.purpose != "Send to Subcontractor" and self.purpose in ["Manufacture", "Repack"]:
@@ -1447,14 +1446,15 @@ class StockEntry(StockController):
 							qty = req_qty_each * flt(self.fg_completed_qty)
 
 			elif backflushed_materials.get(item.item_code):
+				precision = frappe.get_precision("Stock Entry Detail", "qty")
 				for d in backflushed_materials.get(item.item_code):
-					if d.get(item.warehouse):
+					if d.get(item.warehouse) > 0:
 						if (qty > req_qty):
-							qty = (qty/trans_qty) * flt(self.fg_completed_qty)
+							qty = ((flt(qty, precision) - flt(d.get(item.warehouse), precision))
+								/ (flt(trans_qty, precision) - flt(produced_qty, precision))
+							) * flt(self.fg_completed_qty)
 
-						if consumed_qty and frappe.db.get_single_value("Manufacturing Settings",
-							"material_consumption"):
-							qty -= consumed_qty
+							d[item.warehouse] -= qty
 
 			if cint(frappe.get_cached_value('UOM', item.stock_uom, 'must_be_whole_number')):
 				qty = frappe.utils.ceil(qty)
@@ -1674,6 +1674,8 @@ class StockEntry(StockController):
 			for d in self.get("items"):
 				item_code = d.get('original_item') or d.get('item_code')
 				reserve_warehouse = item_wh.get(item_code)
+				if not (reserve_warehouse and item_code):
+					continue
 				stock_bin = get_bin(item_code, reserve_warehouse)
 				stock_bin.update_reserved_qty_for_sub_contracting()
 
