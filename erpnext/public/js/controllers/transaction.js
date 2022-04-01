@@ -736,6 +736,26 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		});
 	},
 
+	add_taxes_from_item_tax_template: function(item_tax_map) {
+		let me = this;
+
+		if (item_tax_map && cint(frappe.defaults.get_default("add_taxes_from_item_tax_template"))) {
+			if (typeof (item_tax_map) == "string") {
+				item_tax_map = JSON.parse(item_tax_map);
+			}
+
+			$.each(item_tax_map, function(tax, rate) {
+				let found = (me.frm.doc.taxes || []).find(d => d.account_head === tax);
+				if (!found) {
+					let child = frappe.model.add_child(me.frm.doc, "taxes");
+					child.charge_type = "On Net Total";
+					child.account_head = tax;
+					child.rate = 0;
+				}
+			});
+		}
+	},
+
 	serial_no: function(doc, cdt, cdn) {
 		var me = this;
 		var item = frappe.get_doc(cdt, cdn);
@@ -1023,7 +1043,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		var company_currency = this.get_company_currency();
 		// Added `ignore_price_list` to determine if document is loading after mapping from another doc
 		if(this.frm.doc.currency && this.frm.doc.currency !== company_currency
-				&& !this.frm.doc.__onload.ignore_price_list) {
+				&& !(this.frm.doc.__onload && this.frm.doc.__onload.ignore_price_list)) {
 
 			this.get_exchange_rate(transaction_date, this.frm.doc.currency, company_currency,
 				function(exchange_rate) {
@@ -1066,6 +1086,9 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 			return this.frm.call({
 				doc: this.frm.doc,
 				method: "apply_shipping_rule",
+				callback: function(r) {
+					me._calculate_taxes_and_totals();
+				}
 			}).fail(() => this.frm.set_value('shipping_rule', ''));
 		}
 	},
@@ -1124,7 +1147,8 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 		var company_currency = this.get_company_currency();
 		// Added `ignore_price_list` to determine if document is loading after mapping from another doc
-		if(this.frm.doc.price_list_currency !== company_currency  && !this.frm.doc.__onload.ignore_price_list) {
+		if(this.frm.doc.price_list_currency !== company_currency  &&
+				!(this.frm.doc.__onload && this.frm.doc.__onload.ignore_price_list)) {
 			this.get_exchange_rate(this.frm.doc.posting_date, this.frm.doc.price_list_currency, company_currency,
 				function(exchange_rate) {
 					me.frm.set_value("plc_conversion_rate", exchange_rate);
