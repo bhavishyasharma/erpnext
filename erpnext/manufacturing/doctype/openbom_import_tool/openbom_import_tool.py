@@ -62,6 +62,8 @@ def import_open_bom(import_file, item_code):
 		if "." not in row[0]:
 			operation = row[2]
 			op_qty = frappe.utils.flt(row[3])
+			if(op_qty == 0):
+				op_qty = 1
 			op = bom.append('operations', {})
 			op.operation = operation
 			op.workstation = "Assembly Bay"
@@ -78,7 +80,7 @@ def import_open_bom(import_file, item_code):
 	for item in bom.items:
 		item.stock_uom = item.uom
 	bom.save()
-	bom.submit()
+	#bom.submit()
 	frappe.db.commit()
 	frappe.msgprint(_("New BOM: {0} for Item: {1} created.")
 					.format(bom.name, bom.item))

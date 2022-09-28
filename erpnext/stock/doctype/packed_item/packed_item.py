@@ -8,7 +8,7 @@ import json
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import flt, cstr
 
 from frappe.model.document import Document
 from erpnext.controllers.buying_controller import BuyingController
