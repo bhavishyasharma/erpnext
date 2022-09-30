@@ -1,0 +1,175 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2022-09-29 19:39:53.715986",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "gstin_of_supplier",
+  "tradelegal_name",
+  "invoice_number",
+  "invoice_type",
+  "invoice_date",
+  "invoice_value",
+  "place_of_supply",
+  "supply_attract_reverse_charge",
+  "column_break_9",
+  "rate",
+  "taxable_value",
+  "integrated_tax",
+  "central_tax",
+  "stateut_tax",
+  "cess",
+  "gstr_1iffgstr_5_period",
+  "gstr_1iffgstr_5_filing_date",
+  "itc_availability",
+  "reason",
+  "applicable_percentage_of_tax_rate",
+  "source",
+  "irn",
+  "irn_date",
+  "reason_for_not_availing_itc"
+ ],
+ "fields": [
+  {
+   "fieldname": "gstin_of_supplier",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "GSTIN of supplier"
+  },
+  {
+   "fieldname": "tradelegal_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Trade/Legal name"
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Invoice number"
+  },
+  {
+   "fieldname": "invoice_type",
+   "fieldtype": "Data",
+   "label": "Invoice type"
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Invoice Date"
+  },
+  {
+   "fieldname": "invoice_value",
+   "fieldtype": "Currency",
+   "label": "Invoice Value",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Data",
+   "label": "Place of supply"
+  },
+  {
+   "fieldname": "supply_attract_reverse_charge",
+   "fieldtype": "Data",
+   "label": "Supply Attract Reverse Charge"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "taxable_value",
+   "fieldtype": "Currency",
+   "label": "Taxable Value",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "integrated_tax",
+   "fieldtype": "Currency",
+   "label": "Integrated Tax",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "central_tax",
+   "fieldtype": "Currency",
+   "label": "Central Tax",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "stateut_tax",
+   "fieldtype": "Currency",
+   "label": "State/UT Tax",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "cess",
+   "fieldtype": "Currency",
+   "label": "Cess",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "gstr_1iffgstr_5_period",
+   "fieldtype": "Data",
+   "label": "GSTR 1/IFF/GSTR 5 Period"
+  },
+  {
+   "fieldname": "gstr_1iffgstr_5_filing_date",
+   "fieldtype": "Data",
+   "label": "GSTR 1/IFF/GSTR 5 Filing Date"
+  },
+  {
+   "fieldname": "itc_availability",
+   "fieldtype": "Data",
+   "label": "ITC Availability"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source"
+  },
+  {
+   "fieldname": "irn",
+   "fieldtype": "Data",
+   "label": "IRN"
+  },
+  {
+   "fieldname": "irn_date",
+   "fieldtype": "Data",
+   "label": "IRN Date"
+  },
+  {
+   "fieldname": "applicable_percentage_of_tax_rate",
+   "fieldtype": "Data",
+   "label": "Applicable Percentage of Tax Rate"
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reason_for_not_availing_itc",
+   "fieldtype": "Text",
+   "label": "Reason for not availing ITC"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-09-29 20:10:27.945438",
+ "modified_by": "Administrator",
+ "module": "Regional",
+ "name": "Portal GSTR 2B Invoice Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

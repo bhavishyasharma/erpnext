@@ -455,16 +455,16 @@
    "type": "Link"
   },
   {
-    "dependencies": "GL Entry",
-    "hidden": 0,
-    "is_query_report": 1,
-    "label": "KSA VAT Report",
-    "link_to": "KSA VAT",
-    "link_type": "Report",
-    "onboard": 0,
-    "only_for": "Saudi Arabia",
-    "type": "Link"
-   },
+   "dependencies": "GL Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "KSA VAT Report",
+   "link_to": "KSA VAT",
+   "link_type": "Report",
+   "onboard": 0,
+   "only_for": "Saudi Arabia",
+   "type": "Link"
+  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -840,6 +840,45 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "GST Reconciliation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "only_for": "India",
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal GSTR 2B",
+   "link_to": "Portal GSTR 2B",
+   "link_type": "DocType",
+   "onboard": 0,
+   "only_for": "India",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "GSTR 2B Reconciliation",
+   "link_to": "GSTR 2B Reconciliation",
+   "link_type": "Report",
+   "onboard": 0,
+   "only_for": "India",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Invoice Update Tool",
+   "link_to": "Purchase Invoice Update Tool",
+   "link_type": "DocType",
+   "onboard": 0,
+   "only_for": "India",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Share Management",
    "onboard": 0,
    "type": "Card Break"
@@ -1046,15 +1085,15 @@
    "type": "Link"
   },
   {
-    "hidden": 0,
-    "is_query_report": 0,
-    "label": "KSA VAT Setting",
-    "link_to": "KSA VAT Setting",
-    "link_type": "DocType",
-    "onboard": 0,
-    "only_for": "Saudi Arabia",
-    "type": "Link"
-   },
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "KSA VAT Setting",
+   "link_to": "KSA VAT Setting",
+   "link_type": "DocType",
+   "onboard": 0,
+   "only_for": "Saudi Arabia",
+   "type": "Link"
+  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -1103,7 +1142,7 @@
    "type": "Link"
   }
  ],
- "modified": "2021-08-26 13:15:52.872470",
+ "modified": "2022-09-30 01:36:47.525190",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Accounting",
