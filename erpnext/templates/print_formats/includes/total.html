@@ -1,4 +1,4 @@
-<div class="row">
+<div class="row data-field">
 	{% if doc.flags.show_inclusive_tax_in_print %}
 		<div class="col-xs-5 {%- if doc.align_labels_right %} text-right{%- endif -%}">
 			<label>{{ _("Total (Without Tax)") }}</label></div>
@@ -7,7 +7,7 @@
 		</div>
 	{% else %}
 		<div class="col-xs-5 {%- if doc.align_labels_right %} text-right{%- endif -%}">
-			<label>{{ _(df.label) }}</label></div>
+			<label>{{ _(df.label) }}:</label></div>
 		<div class="col-xs-7 text-right">
 			{{ doc.get_formatted("total", doc) }}
 		</div>
