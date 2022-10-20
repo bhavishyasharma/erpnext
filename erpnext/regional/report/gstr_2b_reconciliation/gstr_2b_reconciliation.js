@@ -27,7 +27,8 @@ frappe.query_reports["GSTR 2B Reconciliation"] = {
 	],
 	"formatter": function (value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
-		console.log(data);
+		if(data === undefined)
+			return value;
 		if (data["igst_difference"] > 1 || data["igst_difference"] < -1 || data["cgst_difference"] > 1 || data["cgst_difference"] < -1 || data["sgst_difference"] > 1 || data["sgst_difference"] < -1) {
 			value = "<span style='color:red!important;font-weight:bold'>" + value + "</span>";
 		}

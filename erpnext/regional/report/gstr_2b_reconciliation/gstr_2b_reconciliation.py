@@ -39,21 +39,36 @@ def execute(filters=None):
 	company_currency = frappe.get_cached_value('Company',  filters.company,  "default_currency")
 
 	portal_invoice_list = frappe.db.sql("""select
-			gstin_of_supplier, tradelegal_name, invoice_number, invoice_date,
+			gstin_of_supplier, tradelegal_name, invoice_number, invoice_date, invoice_type,
 			supply_attract_reverse_charge, itc_availability,
 			sum(taxable_value) as total_taxable_value,
 			sum(integrated_tax) as total_igst, sum(central_tax) as total_cgst,
 			sum(stateut_tax) as total_sgst, sum(invoice_value) as total_invoice_value
-			from `tabPortal GSTR 2B Invoice Entry`
+			from `tabPortal GSTR 2B Invoice Entry` where invoice_date>=%(from_date)s and invoice_date<=%(to_date)s
 			group by gstin_of_supplier, invoice_number
-			order by tradelegal_name""", as_dict=1)
+			order by tradelegal_name""", filters, as_dict=1)
+
+	portal_credit_notes_list = frappe.db.sql("""select
+			gstin_of_supplier, tradelegal_name, note_number, note_date, note_type,
+			supply_attract_reverse_charge, itc_availability,
+			sum(taxable_value) as total_taxable_value,
+			sum(integrated_tax) as total_igst, sum(central_tax) as total_cgst,
+			sum(stateut_tax) as total_sgst, sum(note_value) as total_invoice_value
+			from `tabPortal GSTR 2B Credit Note Entry` where note_date>=%(from_date)s and note_date<=%(to_date)s
+			group by gstin_of_supplier, note_number
+			order by tradelegal_name""", filters, as_dict=1)
 
 	portal_invoices = {}
 	for inv in portal_invoice_list:
 		portal_invoices[(inv['gstin_of_supplier'], inv['invoice_number'])] = inv
 
+	portal_credit_notes = {}
+	for inv in portal_credit_notes_list:
+		portal_credit_notes[(inv['gstin_of_supplier'], inv['note_number'])] = inv
 
-	columns += [_('Portal Reverse Charge') + "::100",
+
+	columns += [_('Document Type') + "::100",
+				_('Portal Reverse Charge') + "::100",
 				_('ITC Availability') + "::60",
 				_('Taxable Value') + ":Currency/currency:120",
 				_('IGST ITC') + ":Currency/currency:120",
@@ -104,8 +119,10 @@ def execute(filters=None):
 		row += [total_tax, inv.base_grand_total, flt(inv.base_grand_total, 0)]
 
 		key = (inv['supplier_gstin'], inv['bill_no'])
+		other_key = (inv['supplier_gstin'], inv['name'])
 		if portal_invoices.get(key) and not inv['is_return']:
 			portal_invoice = portal_invoices[key]
+			row.append(portal_invoice['invoice_type'] or '')
 			row.append(portal_invoice['supply_attract_reverse_charge'] or '')
 			row.append(portal_invoice['itc_availability'] or '')
 			row.append(portal_invoice['total_taxable_value'] or 0)
@@ -135,8 +152,45 @@ def execute(filters=None):
 				row.append(cgst_amount)
 				row.append(sgst_amount)
 			del portal_invoices[key]
+		elif (portal_credit_notes.get(key) or portal_credit_notes.get(other_key)) and inv['is_return']:
+			final_key = key if portal_credit_notes.get(key) else other_key
+			portal_credit_note = portal_credit_notes[final_key]
+			row.append(portal_credit_note['note_type'] or '')
+			row.append(portal_credit_note['supply_attract_reverse_charge'] or '')
+			row.append(portal_credit_note['itc_availability'] or '')
+			row.append(portal_credit_note['total_taxable_value'] or 0)
+			if portal_credit_note['itc_availability']=='Yes':
+				row.append(portal_credit_note['total_igst'] or 0)
+				row.append(portal_credit_note['total_cgst'] or 0)
+				row.append(portal_credit_note['total_sgst'] or 0)
+			else:
+				row.append(0)
+				row.append(0)
+				row.append(0)
+			row.append(-portal_credit_note['total_invoice_value'] or 0)
+			if portal_credit_note['supply_attract_reverse_charge'] != 'Yes': 
+				if portal_credit_note['itc_availability']=='Yes':
+					row.append(igst_amount + (portal_credit_note['total_igst'] or 0))
+					row.append(cgst_amount + (portal_credit_note['total_cgst'] or 0))
+					row.append(sgst_amount + (portal_credit_note['total_sgst'] or 0))
+					row[-1] = round(row[-1])
+					row[-2] = round(row[-2])
+					row[-3] = round(row[-3])
+				else:
+					row.append(igst_amount)
+					row.append(cgst_amount)
+					row.append(sgst_amount)
+			else:
+				row.append(igst_amount)
+				row.append(cgst_amount)
+				row.append(sgst_amount)
+			
+			del portal_credit_notes[final_key]
 		else:
-			row += ['','','','','','','','','','']
+			if not inv['is_return']:
+				row += ['Purchase Invoice','','','','','','','','','','']
+			else:
+				row += ['Debit Note','','','','','','','','','','']
 		if row[-1] == 0 and row[-2] == 0 and row[-3] == 0:
 			continue
 		data.append(row)
@@ -150,6 +204,7 @@ def execute(filters=None):
 			if tax_acc not in expense_accounts:
 				row.append('')
 		row += ['','']
+		row.append(portal_invoice['invoice_type'] or '')
 		row.append(portal_invoice['supply_attract_reverse_charge'] or '')
 		row.append(portal_invoice['itc_availability'] or '')
 		row.append(portal_invoice['total_taxable_value'] or 0)
@@ -160,6 +215,29 @@ def execute(filters=None):
 		row.append(-portal_invoice['total_igst'] or 0)
 		row.append(-portal_invoice['total_cgst'] or 0)
 		row.append(-portal_invoice['total_sgst'] or 0)
+
+		data.append(row)
+
+	for key in portal_credit_notes:
+		portal_credit_note = portal_credit_notes[key]
+		row = ['', '', '', portal_credit_note['tradelegal_name'], portal_credit_note['gstin_of_supplier'],
+				'', '', portal_credit_note['note_number'], portal_credit_note['note_date'], 
+				portal_credit_note['total_taxable_value'], '']
+		for tax_acc in tax_accounts:
+			if tax_acc not in expense_accounts:
+				row.append('')
+		row += ['','']
+		row.append(portal_credit_note['note_type'] or '')
+		row.append(portal_credit_note['supply_attract_reverse_charge'] or '')
+		row.append(portal_credit_note['itc_availability'] or '')
+		row.append(portal_credit_note['total_taxable_value'] or 0)
+		row.append(portal_credit_note['total_igst'] or 0)
+		row.append(portal_credit_note['total_cgst'] or 0)
+		row.append(portal_credit_note['total_sgst'] or 0)
+		row.append(portal_credit_note['total_invoice_value'] or 0)
+		row.append(-portal_credit_note['total_igst'] or 0)
+		row.append(-portal_credit_note['total_cgst'] or 0)
+		row.append(-portal_credit_note['total_sgst'] or 0)
 
 		data.append(row)
 

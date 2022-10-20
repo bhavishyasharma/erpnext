@@ -9,7 +9,8 @@
  "field_order": [
   "fiscal_year",
   "month",
-  "invoices"
+  "invoices",
+  "credit_notes"
  ],
  "fields": [
   {
@@ -34,11 +35,18 @@
    "fieldtype": "Table",
    "label": "Invoices",
    "options": "Portal GSTR 2B Invoice Entry"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "credit_notes",
+   "fieldtype": "Table",
+   "label": "Credit Notes",
+   "options": "Portal GSTR 2B Credit Note Entry"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-09-29 19:50:15.171965",
+ "modified": "2022-10-20 17:12:11.583898",
  "modified_by": "Administrator",
  "module": "Regional",
  "name": "Portal GSTR 2B",
@@ -53,6 +61,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
    "share": 1,
    "write": 1
   }

@@ -1,5 +1,5 @@
 {
- "add_total_row": 0,
+ "add_total_row": 1,
  "columns": [],
  "creation": "2022-09-29 20:23:14.920360",
  "disable_prepared_report": 0,
@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": "Default",
- "modified": "2022-09-29 20:23:14.920360",
+ "modified": "2022-10-20 11:28:59.601494",
  "modified_by": "Administrator",
  "module": "Regional",
  "name": "GSTR 2B Reconciliation",

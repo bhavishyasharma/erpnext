@@ -1,0 +1,181 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2022-10-20 17:10:30.471656",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "gstin_of_supplier",
+  "tradelegal_name",
+  "note_number",
+  "note_type",
+  "note_supply_type",
+  "note_date",
+  "note_value",
+  "place_of_supply",
+  "supply_attract_reverse_charge",
+  "column_break_9",
+  "rate",
+  "taxable_value",
+  "integrated_tax",
+  "central_tax",
+  "stateut_tax",
+  "cess",
+  "gstr_1iffgstr_5_period",
+  "gstr_1iffgstr_5_filing_date",
+  "itc_availability",
+  "reason",
+  "applicable_percentage_of_tax_rate",
+  "source",
+  "irn",
+  "irn_date",
+  "reason_for_not_availing_itc"
+ ],
+ "fields": [
+  {
+   "fieldname": "gstin_of_supplier",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "GSTIN of supplier"
+  },
+  {
+   "fieldname": "tradelegal_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Trade/Legal name"
+  },
+  {
+   "fieldname": "note_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Note number"
+  },
+  {
+   "fieldname": "note_type",
+   "fieldtype": "Data",
+   "label": "Note type"
+  },
+  {
+   "fieldname": "note_supply_type",
+   "fieldtype": "Data",
+   "label": "Note Supply type"
+  },
+  {
+   "fieldname": "note_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Note date"
+  },
+  {
+   "fieldname": "note_value",
+   "fieldtype": "Currency",
+   "label": "Note Value",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Data",
+   "label": "Place of supply"
+  },
+  {
+   "fieldname": "supply_attract_reverse_charge",
+   "fieldtype": "Data",
+   "label": "Supply Attract Reverse Charge"
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "taxable_value",
+   "fieldtype": "Currency",
+   "label": "Taxable Value",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "integrated_tax",
+   "fieldtype": "Currency",
+   "label": "Integrated Tax",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "central_tax",
+   "fieldtype": "Currency",
+   "label": "Central Tax",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "stateut_tax",
+   "fieldtype": "Currency",
+   "label": "State/UT Tax",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "cess",
+   "fieldtype": "Currency",
+   "label": "Cess",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "gstr_1iffgstr_5_period",
+   "fieldtype": "Data",
+   "label": "GSTR 1/IFF/GSTR 5 Period"
+  },
+  {
+   "fieldname": "gstr_1iffgstr_5_filing_date",
+   "fieldtype": "Data",
+   "label": "GSTR 1/IFF/GSTR 5 Filing Date"
+  },
+  {
+   "fieldname": "itc_availability",
+   "fieldtype": "Data",
+   "label": "ITC Availability"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "applicable_percentage_of_tax_rate",
+   "fieldtype": "Data",
+   "label": "Applicable Percentage of Tax Rate"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source"
+  },
+  {
+   "fieldname": "irn",
+   "fieldtype": "Data",
+   "label": "IRN"
+  },
+  {
+   "fieldname": "irn_date",
+   "fieldtype": "Data",
+   "label": "IRN Date"
+  },
+  {
+   "fieldname": "reason_for_not_availing_itc",
+   "fieldtype": "Text",
+   "label": "Reason for not availing ITC"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-10-20 17:10:30.471656",
+ "modified_by": "Administrator",
+ "module": "Regional",
+ "name": "Portal GSTR 2B Credit Note Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
