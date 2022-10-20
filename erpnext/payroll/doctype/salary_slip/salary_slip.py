@@ -1007,6 +1007,10 @@ class SalarySlip(TransactionBase):
 
 		# apply rounding
 		if frappe.get_cached_value("Salary Component", row.salary_component, "round_to_the_nearest_integer"):
+			if (float(amount) % 1) == 0.5:
+				amount = ceil(amount)
+			if (float(additional_amount) % 1) == 0.5:
+				additional_amount = ceil(additional_amount)
 			amount, additional_amount = rounded(amount or 0), rounded(additional_amount or 0)
 
 		return amount, additional_amount
