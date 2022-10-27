@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
+// Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
 cur_frm.cscript.refresh = function(doc, cdt, cdn) {
@@ -19,6 +19,14 @@ cur_frm.cscript.onload = function() {
 }
 
 frappe.ui.form.on('Product Bundle', {
+	refresh: function (frm) {
+		frm.toggle_enable("new_item_code", frm.is_new());
+		frm.set_query("new_item_code", () => {
+			return {
+				query: "erpnext.selling.doctype.product_bundle.product_bundle.get_new_item_code",
+			};
+		});
+	},
 	set_total_weightage: function(frm, cdt, cdn) {
 		if(isNaN(locals[cdt][cdn].weightage_per_qty)){
 			frappe.model.set_value(cdt, cdn, 'total_weightage', 0.0 );
