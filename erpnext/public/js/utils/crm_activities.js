@@ -142,12 +142,19 @@ erpnext.utils.CRMNotes = class CRMNotes {
 				title: __("Add a Note"),
 				fields: [
 					{
-						label: "Note",
-						fieldname: "note",
-						fieldtype: "Text Editor",
-						reqd: 1,
-						enable_mentions: true,
+						"label": "Type",
+						"fieldname": "type",
+						"fieldtype": "Select",
+						"reqd": 1,
+						"options": ["Call", "Meeting", "Other"],
 					},
+					{
+						"label": "Note",
+						"fieldname": "note",
+						"fieldtype": "Text Editor",
+						"reqd": 1,
+						"enable_mentions": true,
+					}
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -155,7 +162,8 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						method: "add_note",
 						doc: me.frm.doc,
 						args: {
-							note: data.note,
+							note_type: data.type,
+							note: data.note
 						},
 						freeze: true,
 						callback: function (r) {

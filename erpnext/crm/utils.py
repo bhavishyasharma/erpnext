@@ -200,8 +200,8 @@ def open_leads_opportunities_based_on_todays_event():
 
 class CRMNote(Document):
 	@frappe.whitelist()
-	def add_note(self, note):
-		self.append("notes", {"note": note, "added_by": frappe.session.user, "added_on": now()})
+	def add_note(self, note_type, note):
+		self.append("notes", {"type": note_type, "note": note, "added_by": frappe.session.user, "added_on": now()})
 		self.save()
 		notify_mentions(self.doctype, self.name, note)
 

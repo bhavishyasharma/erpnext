@@ -18,6 +18,9 @@
 								{{ frappe.avatar(notes[i].added_by) }}
 							</div>
 							<div class="col-xs-10">
+								<div class="mr-2 title font-weight-bold ellipsis" title="{{ strip_html(notes[i].type) }}">
+									{{ strip_html(notes[i].type) }}
+								</div>
 								<div class="mr-2 title font-weight-bold ellipsis" title="{{ strip_html(notes[i].added_by) }}">
 									{{ strip_html(notes[i].added_by) }}
 								</div>
