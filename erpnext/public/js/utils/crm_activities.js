@@ -140,6 +140,13 @@ erpnext.utils.CRMNotes = class CRMNotes {
 				title: __('Add a Note'),
 				fields: [
 					{
+						"label": "Type",
+						"fieldname": "type",
+						"fieldtype": "Select",
+						"reqd": 1,
+						"options": ["Call", "Meeting", "Other"],
+					},
+					{
 						"label": "Note",
 						"fieldname": "note",
 						"fieldtype": "Text Editor",
@@ -153,6 +160,7 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						method: "add_note",
 						doc: me.frm.doc,
 						args: {
+							note_type: data.type,
 							note: data.note
 						},
 						freeze: true,
