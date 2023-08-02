@@ -145,8 +145,8 @@ class StockEntry(StockController):
 		self.clean_serial_nos()
 		self.validate_duplicate_serial_no()
 
-		if not self.from_bom:
-			self.fg_completed_qty = 0.0
+		#if not self.from_bom:
+		#	self.fg_completed_qty = 0.0
 
 		if self._action == "submit":
 			self.make_batches("t_warehouse")
@@ -1074,7 +1074,7 @@ class StockEntry(StockController):
 		for d in self.get("items"):
 			if d.bom_no and d.is_finished_item:
 				item_code = d.original_item or d.item_code
-				validate_bom_no(item_code, d.bom_no)
+				#validate_bom_no(item_code, d.bom_no)
 
 	def validate_purchase_order(self):
 		if self.purpose == "Send to Subcontractor" and self.get("purchase_order"):
