@@ -225,8 +225,8 @@ class StockEntry(StockController):
 		self.set_purpose_for_stock_entry()
 		self.clean_serial_nos()
 
-		if not self.from_bom:
-			self.fg_completed_qty = 0.0
+		#if not self.from_bom:
+		#	self.fg_completed_qty = 0.0
 
 		self.make_serial_and_batch_bundle_for_outward()
 		self.validate_serialized_batch()
@@ -1251,7 +1251,7 @@ class StockEntry(StockController):
 		for d in self.get("items"):
 			if d.bom_no and d.is_finished_item:
 				item_code = d.original_item or d.item_code
-				validate_bom_no(item_code, d.bom_no)
+				#validate_bom_no(item_code, d.bom_no)
 
 	def validate_purchase_order(self):
 		if self.purpose == "Send to Subcontractor" and self.get("purchase_order"):
