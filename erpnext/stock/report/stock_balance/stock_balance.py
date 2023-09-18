@@ -44,6 +44,8 @@ class StockBalanceReport:
 		self.filters = filters
 		self.from_date = getdate(filters.get("from_date"))
 		self.to_date = getdate(filters.get("to_date"))
+		self.company = filters.get("company")
+		self.ignore_closing_balance = filters.get("ignore_closing_balance")
 
 		self.start_from = None
 		self.data = []
@@ -370,7 +372,7 @@ class StockBalanceReport:
 		return query
 
 	def apply_date_filters(self, query, sle) -> str:
-		if not self.filters.ignore_closing_balance and self.start_from:
+		if not self.ignore_closing_balance and self.start_from:
 			query = query.where(sle.posting_date >= self.start_from)
 
 		if self.to_date:

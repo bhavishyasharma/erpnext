@@ -1413,7 +1413,9 @@ def make_stock_entry(work_order_id, purpose, qty=None, target_warehouse=None):
 		columns, items = stock_balance_report({
 			'from_date': frappe.utils.add_to_date(nowdate(), days=-10),
 			'to_date': frappe.utils.add_to_date(nowdate(), days=0),
-			'warehouse': work_order.wip_warehouse})
+			'warehouse': work_order.wip_warehouse,
+			'company': work_order.company,
+			'ignore_closing_balance': 1})
 		stock_entry.from_bom = 0
 		items = sorted(items, key=lambda d: d['item_code'])
 		expense_account = get_company_default(work_order.company, "default_expense_account")
