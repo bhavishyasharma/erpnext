@@ -45,6 +45,7 @@ class StockBalanceReport:
 		self.from_date = getdate(filters.get("from_date"))
 		self.to_date = getdate(filters.get("to_date"))
 		self.company = filters.get("company")
+		self.valuation_field_type = filters.get("valuation_field_type")
 		self.ignore_closing_balance = filters.get("ignore_closing_balance")
 
 		self.start_from = None
@@ -473,11 +474,11 @@ class StockBalanceReport:
 				{
 					"label": _("Valuation Rate"),
 					"fieldname": "val_rate",
-					"fieldtype": self.filters.valuation_field_type or "Currency",
+					"fieldtype": self.valuation_field_type or "Currency",
 					"width": 90,
 					"convertible": "rate",
 					"options": "Company:company:default_currency"
-					if self.filters.valuation_field_type == "Currency"
+					if self.valuation_field_type == "Currency"
 					else None,
 				},
 				{
