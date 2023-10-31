@@ -1297,6 +1297,7 @@ def make_stock_entry(work_order_id, purpose, qty=None):
 			'to_date': frappe.utils.add_to_date(nowdate(), days=0),
 			'warehouse': work_order.wip_warehouse,
 			'company': work_order.company,
+			'valuation_field_type': 'Currency',
 			'ignore_closing_balance': 1})
 		stock_entry.from_bom = 0
 		items = sorted(items, key=lambda d: d['item_code'])
