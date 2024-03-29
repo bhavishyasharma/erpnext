@@ -428,7 +428,7 @@ class Asset(AccountsController):
 				and (has_pro_rata or has_wdv_or_dd_non_yearly_pro_rata)
 				and not self.opening_accumulated_depreciation
 				and get_updated_rate_of_depreciation_for_wdv_and_dd(
-					self, value_after_depreciation, finance_book, False
+					self, value_after_depreciation, finance_book
 				)
 				== finance_book.rate_of_depreciation
 			):
@@ -1092,7 +1092,11 @@ class Asset(AccountsController):
 		else:
 			total_days = get_total_days(to_date, row.frequency_of_depreciation)
 
-		return (depreciation_amount * flt(days)) / flt(total_days), days, months
+		#return (depreciation_amount * flt(days)) / flt(total_days), days, months
+		if flt(days)>180.0:
+			return depreciation_amount, days, months
+		else:
+			return depreciation_amount / flt(2.0), days, months
 
 
 def update_maintenance_status():
