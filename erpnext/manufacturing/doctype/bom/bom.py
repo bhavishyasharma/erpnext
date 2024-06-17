@@ -1122,7 +1122,7 @@ def get_bom_items_as_dict(
 				and bom.name = %(bom)s
 				and item.is_stock_item in (1, {is_stock_item})
 				{where_conditions}
-				group by item_code, stock_uom
+				group by item_code, stock_uom {group_columns}
 				order by idx"""
 
 	is_stock_item = 0 if include_non_stock_items else 1
@@ -1135,6 +1135,7 @@ def get_bom_items_as_dict(
 			select_columns=""", bom_item.source_warehouse, bom_item.operation,
 				bom_item.include_item_in_manufacturing, bom_item.description, bom_item.rate, bom_item.sourced_by_supplier,
 				(Select idx from `tabBOM Item` where item_code = bom_item.item_code and parent = %(parent)s limit 1) as idx""",
+			group_columns=""", bom_item.operation""",
 		)
 
 		items = frappe.db.sql(
@@ -1147,6 +1148,7 @@ def get_bom_items_as_dict(
 			select_columns=", item.description",
 			is_stock_item=is_stock_item,
 			qty_field="stock_qty",
+			group_columns="",
 		)
 
 		items = frappe.db.sql(query, {"qty": qty, "bom": bom, "company": company}, as_dict=True)
@@ -1159,14 +1161,18 @@ def get_bom_items_as_dict(
 			select_columns=""", bom_item.uom, bom_item.conversion_factor, bom_item.source_warehouse,
 				bom_item.operation, bom_item.include_item_in_manufacturing, bom_item.sourced_by_supplier,
 				bom_item.description, bom_item.base_rate as rate """,
+			group_columns=""", bom_item.operation""",
 		)
 		items = frappe.db.sql(query, {"qty": qty, "bom": bom, "company": company}, as_dict=True)
 
 	for item in items:
+		key = (item.item_code)
+		if item.operation:
+			key = (item.item_code, item.operation)
 		if item.item_code in item_dict:
-			item_dict[item.item_code]["qty"] += flt(item.qty)
+			item_dict[key]["qty"] += flt(item.qty)
 		else:
-			item_dict[item.item_code] = item
+			item_dict[key] = item
 
 	for item, item_details in item_dict.items():
 		for d in [
